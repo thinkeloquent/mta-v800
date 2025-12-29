@@ -428,3 +428,5 @@ VAULT_SECRET_FILE
 Thumbs.db
 desktop.ini
 output.json
+.GEMINI.md
+.CLAUDE.md
