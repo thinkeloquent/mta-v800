@@ -72,6 +72,19 @@ help:
 
 init:
 	@echo "$(CYAN)Initializing submodules...$(NC)"
+	@# Check if .gitmodules exists but submodules aren't in the index
+	@if [ -f .gitmodules ]; then \
+		git config --file .gitmodules --get-regexp 'submodule\..*\.path' | while read key path; do \
+			url_key=$$(echo "$$key" | sed 's/\.path$$/.url/'); \
+			url=$$(git config --file .gitmodules --get "$$url_key"); \
+			if ! git ls-files --stage | grep -q "160000.*$$path$$"; then \
+				echo "$(YELLOW)Adding missing submodule: $$path$(NC)"; \
+				mkdir -p "$$(dirname "$$path")"; \
+				git submodule add "$$url" "$$path" 2>/dev/null || \
+				git submodule add --force "$$url" "$$path" 2>/dev/null || true; \
+			fi \
+		done \
+	fi
 	git submodule init
 	git submodule update
 	@echo "$(GREEN)Done!$(NC)"
