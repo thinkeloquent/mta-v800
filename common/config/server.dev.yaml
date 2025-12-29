@@ -1,0 +1,608 @@
+# Server Configuration - DEV Environment
+# Shared static configuration values for Python and MJS server packages
+
+# =============================================================================
+# Healthz Route Access Control
+# Allowlists for exposing provider/compute values via healthz admin endpoints
+# =============================================================================
+expose_yaml_config_provider:
+  - gemini_openai
+  - localhost_test_case_001
+  - localhost_test_case_002
+  - localhost_test_case_003
+  - openai
+  - anthropic
+  - figma
+  - github
+  - jira
+  - confluence
+  - postgres
+  - redis
+  - saucelabs
+  - servicenow
+  - rally
+  - statsig
+  - sonar
+  - akamai
+
+expose_yaml_config_compute_auth:
+  providers:
+    - "anthropic"
+    - "openai"
+    - "gemini_openai"
+    - "localhost_test_case_001"
+    - "localhost_test_case_002"
+  services:
+    - "confluence"
+    - "jira"
+  storages:
+    - "redis"
+    - "postgres"
+
+
+expose_yaml_config_compute:
+  - proxy_url
+
+expose_yaml_config_service:
+  - confluence
+
+expose_yaml_config_storage:
+  - redis
+  - postgres
+  - elasticsearch
+
+# =============================================================================
+# Provider Configuration
+# All external API endpoints must be defined here (no hardcoded fallbacks)
+# =============================================================================
+
+# proxy_url: false: explicitly tells the ProxyDispatcher to disable proxying for this client. It overrides the global settings (where proxy_urls might be defined) and forces a direct connection. This is the correct way to opt-out a specific provider from the global proxy.
+# proxy_url: null (or missing): typically means "no override". In this case, the ProviderClientFactory falls back to the merged network configuration. If the global config has network.proxy_urls set (like in server.dev.yaml), null would result in inheriting that global proxy.
+
+providers:
+  localhost_test_case_001:
+    base_url: "https://generativelanguage.googleapis.localhost/v1beta/openai/models"
+    method: "POST"
+    verify_ssl: false          # <-- Set to false to disable SSL
+    follow_redirects: true     # <-- Also configurable
+    body:
+      languageCode: "en-US"
+      summary: "Come in for our spooky Halloween event!"
+    headers:
+      X-App-Name: null
+      X-App-Version: null
+      X-Request-Id: null
+      X-Computed-Token: null
+    overwrite_from_context:
+      headers:
+        X-App-Name: "{{app.name}}"
+        X-App-Version: "{{app.version}}"
+        X-Request-Id: "{{request.headers.x-request-id}}"
+        X-Computed-Token: "{{fn:compute_localhost_test_case_001_token}}"
+
+  localhost_test_case_002:
+    base_url: "https://generativelanguage.googleapis.localhost/v1beta/openai/models"
+    method: "POST"
+    verify_ssl: false          # <-- Set to false to disable SSL
+    follow_redirects: true     # <-- Also configurable
+    body:
+      languageCode: "en-US"
+      summary: "Come in for our spooky Halloween event!"
+    headers:
+      X-App-Name: null
+      X-App-Version: null
+      X-Request-Id: null
+      X-Auth: null
+      Authorization: null      # Computed from test-case-002 (jira provider auth)
+
+    overwrite_from_context:
+      headers:
+        X-App-Name: "{{app.name}}"
+        X-App-Version: "{{app.version}}"
+        X-Request-Id: "{{request.headers.x-request-id}}"
+        # Authorization header computed from test_case_002 context resolver
+        # Uses YamlConfigFactory.computeAll() to get jira provider's auth header
+        # See: fastify_server/src/computed_functions/test-case-002.context.compute.mjs
+        # See: fastapi_server/app/computed_functions/test-case-002.context.compute.py
+        X-Auth: "{{fn:test_case_002_1}}"
+        Authorization: "{{fn:test_case_002}}"
+
+  localhost_test_case_003:
+    base_url: "https://generativelanguage.googleapis.localhost/v1beta/openai/models"
+    method: "POST"
+    verify_ssl: false          # <-- Set to false to disable SSL
+    follow_redirects: true     # <-- Also configurable
+    body:
+      languageCode: "en-US"
+      summary: "Come in for our spooky Halloween event!"
+    headers:
+      X-App-Name: null
+      X-App-Version: null
+      X-Request-Id: null
+      X-Auth: null
+      Authorization: null      # Computed from test-case-002 (jira provider auth)
+
+    overwrite_from_context:
+      headers:
+        X-App-Name: "{{app.name}}"
+        X-App-Version: "{{app.version}}"
+        X-Request-Id: "{{request.headers.x-request-id}}"
+        # Authorization header computed from test_case_002 context resolver
+        # Uses YamlConfigFactory.computeAll() to get jira provider's auth header
+        # See: fastify_server/src/computed_functions/test-case-002.context.compute.mjs
+        # See: fastapi_server/app/computed_functions/test-case-002.context.compute.py
+        X-Auth: "{{fn:test_case_002_1}}"
+        Authorization: "{{fn:test_case_002}}"
+
+  gemini_openai:
+    base_url: "https://generativelanguage.googleapis.com/v1beta/openai"
+    model: "gemini-2.0-flash"
+    health_endpoint: "/models"
+    endpoint_api_key: null
+    endpoint_auth_type: "bearer"         # bearer, basic, x-api-key, custom
+    endpoint_auth_token_resolver: "request"        # static (default), startup, request
+    overwrite_from_env:
+      endpoint_api_key: ["GEMINI_API_KEY2", "GEMINI_API_KEY3", "GEMINI_API_KEY"]
+    proxy_url: false  # Disabled - no proxy running
+    client:
+      # Override timeout for this provider only
+      timeout_seconds: 120.0
+      timeout_ms: 120000
+    headers:
+      # Additional headers for this provider only
+      X-Custom-Header: "value"
+
+  openai:
+    base_url: "https://api.openai.com/v1"
+    model: "gpt-4"
+    health_endpoint: "/models"
+    endpoint_auth_type: "bearer"
+    endpoint_auth_token_resolver: "static"
+    proxy_url: false  # Disabled - no proxy running
+    overwrite_from_env:
+      endpoint_api_key: "OPENAI_API_KEY"
+
+  anthropic:
+    base_url: "https://api.anthropic.com/v1"
+    model: "claude-3-sonnet"
+    health_endpoint: "/models"
+    endpoint_auth_type: "x-api-key"       # Anthropic uses x-api-key header
+    endpoint_auth_token_resolver: "static"
+    proxy_url: false  # Disabled - no proxy running
+    overwrite_from_env:
+      endpoint_api_key: "ANTHROPIC_API_KEY"
+    headers:
+      anthropic-version: "2023-06-01"
+      content-type: "application/json"
+
+  figma:
+    base_url: "https://api.figma.com/v1"
+    health_endpoint: "/me"
+    endpoint_auth_type: "custom"             # Figma uses custom X-Figma-Token header
+    api_auth_header_name: "X-Figma-Token"    # Required for dynamic resolution of custom auth
+    endpoint_auth_token_resolver: "startup"
+    proxy_url: false  # Disabled - no proxy running
+    headers:
+      Accept: "application/json"
+    overwrite_from_env:
+      endpoint_api_key: "FIGMA_TOKEN"
+      proxy_url: "FIGMA_PROXY_URL"
+
+    
+  github:
+    base_url: "https://api.github.com"
+    health_endpoint: "/user"
+    endpoint_api_key: null
+    endpoint_auth_type: "bearer"
+    endpoint_auth_token_resolver: "static"
+    proxy_url: false  # Disabled - no proxy running
+    headers:
+      Accept: "application/vnd.github+json"
+      X-GitHub-Api-Version: "2022-11-28"
+      User-Agent: "MTA-FetchClient"
+    # Custom environment variable mappings
+    overwrite_from_env:
+      endpoint_api_key:
+        - "GITHUB_TOKEN"
+        - "GH_TOKEN"
+        - "GITHUB_ACCESS_TOKEN"
+        - "GITHUB_PAT"
+  jira:
+    # JIRA_BASE_URL includes /wiki/rest/api path (Confluence-style)
+    base_url: null
+    email: null
+    health_endpoint: "/user/current"           # Confluence REST API user endpoint
+    endpoint_auth_type: "basic_email_token"         # Jira Cloud uses Basic auth with email:token
+    endpoint_auth_token_resolver: "static"
+    proxy_url: false  # Disabled - no proxy running
+    headers:
+      Content-Type: "application/json"
+      Accept: "application/json"
+
+    overwrite_from_env:
+      endpoint_api_key: "JIRA_API_TOKEN"
+      base_url: "JIRA_BASE_URL"
+      email: "JIRA_EMAIL"
+      project_key: "JIRA_PROJECT_KEY"
+      board_id: "JIRA_BOARD_ID"
+
+  confluence:
+    # NOTE: ENV swapped for testing - CONFLUENCE_BASE_URL points to Jira API
+    # CONFLUENCE_BASE_URL="https://scrumfox.atlassian.net/rest/api/2"
+    base_url: null
+    email: null
+    parent_page_id: null
+    space_key: null
+    endpoint_api_key: null
+    health_endpoint: "/myself"                 # Jira endpoint (ENV swapped)
+    endpoint_auth_type: "basic_email_token"         # Confluence Cloud uses Basic auth with email:token
+    endpoint_auth_token_resolver: "static"
+    proxy_url: false  # Disabled - no proxy running
+    headers:
+      Content-Type: "application/json"
+      Accept: "application/json"
+      X-Atlassian-Token: "no-check"  # Required for write operations (CSRF protection)
+
+    overwrite_from_env:
+      parent_page_id: "CONFLUENCE_PARENT_PAGE_ID"
+      space_key: "CONFLUENCE_SPACE_KEY"
+      email: "CONFLUENCE_EMAIL"
+      endpoint_api_key: "CONFLUENCE_API_TOKEN"
+      base_url: "CONFLUENCE_BASE_URL"
+
+  saucelabs:
+    base_url: "https://api.us-west-1.saucelabs.com"
+    username: null
+    endpoint_api_key: null
+    health_endpoint: "/rest/v1/users/:username"
+    endpoint_auth_type: "basic"           # SauceLabs uses Basic auth with username:access_key
+    endpoint_auth_token_resolver: "static"
+    proxy_url: false  # Disabled - no proxy running
+      
+    overwrite_from_env:
+      username:
+        - "SAUCE_USERNAME"
+        - "SAUCELABS_USERNAME"
+      endpoint_api_key:
+        - "SAUCE_ACCESS_KEY"
+        - "SAUCELABS_ACCESS_KEY"
+
+  # ServiceNow
+  servicenow:
+    base_url: "https://dev12345.service-now.com" # Example instance
+    health_endpoint: "/api/now/table/sys_user?sysparm_limit=1"
+    username: null
+    endpoint_api_key: null
+    endpoint_auth_type: "basic"
+    endpoint_auth_token_resolver: "static"
+    proxy_url: null  # Disabled - no proxy running
+    overwrite_from_env:
+      username: SERVICENOW_USERNAME
+      endpoint_api_key: SERVICENOW_PASSWORD
+      proxy_url: HTTPS_AUTH_PROXY
+
+  # Rally (Broadcom)
+  rally:
+    base_url: "https://rally1.rallydev.com"
+    health_endpoint: "/slm/webservice/v2.0/subscription"
+    endpoint_api_key: null
+    endpoint_auth_type: "custom_header"
+    api_auth_header_name: "ZSESSIONID"
+    proxy_url: 'http://proxy.rally.local:8080'  # Disabled - no proxy running
+    overwrite_from_env:
+      endpoint_api_key: RALLY_API_KEY
+
+
+  statsig:
+    base_url: "https://statsigapi.net/console/v1"
+    health_endpoint: "/gates"
+    endpoint_api_key: null
+    endpoint_auth_type: "custom_header"
+    api_auth_header_name: "statsig-api-key"
+    proxy_url: false  # Disabled - no proxy running
+    overwrite_from_env:
+      endpoint_api_key: STATSIG_API_KEY
+
+  sonar:
+    base_url: "https://sonarcloud.io"  # or https://your-sonar.example.com for SonarQube
+    endpoint_api_key: null
+    health_endpoint: "/api/authentication/validate"
+    endpoint_auth_type: "bearer"
+    endpoint_auth_token_resolver: "static"
+    proxy_url: false  # Disabled - no proxy running
+    overwrite_from_env:
+      base_url: "SONAR_BASE_URL"
+      endpoint_api_key:
+        - SONAR_TOKEN
+        - "SONARQUBE_TOKEN"
+        - "SONARCLOUD_TOKEN"
+        - "SONAR_API_TOKEN"
+
+  # Akamai Edge API (EdgeGrid authentication)
+  akamai:
+    base_url: null  # Set via AKAMAI_HOST or .edgerc file
+    client_token: null
+    client_secret: null
+    access_token: null
+    host: null
+    health_endpoint: "/-/client-api/active-grants/implicit"
+    endpoint_auth_type: "edgegrid"  # Akamai EdgeGrid signature-based auth
+    endpoint_auth_token_resolver: "static"
+    proxy_url: false  # Disabled - no proxy running
+    overwrite_from_env:
+      base_url: "AKAMAI_BASE_URL"
+      host: "AKAMAI_HOST"
+      client_token: AKAMAI_CLIENT_TOKEN
+      client_secret: AKAMAI_CLIENT_SECRET
+      access_token: AKAMAI_ACCESS_TOKEN
+  
+# =============================================================================
+# Proxy Configuration
+# =============================================================================
+global:
+  client:
+    # Timeout values in seconds (Python) / milliseconds (MJS)
+    timeout_seconds: 60.0
+    timeout_ms: 60000
+    # Keep-alive timeout
+    keep_alive_timeout_seconds: 5.0
+    keep_alive_timeout_ms: 5000
+    # Connection pool
+    max_connections: 10
+
+  display:
+    separator_char: "="
+    thin_separator_char: "-"
+    separator_length: 60
+
+  network:
+    default_environment: 'dev'
+    proxy_urls:
+      local: ''
+      dev: 'http://proxy.dev.local:8080'
+      qa: 'http://proxy.qa.local:8080'
+      prod: 'http://proxy.prod.local:8080'
+    ca_bundle: "/path/to/custom-ca.crt"
+    cert: null
+    cert_verify: true
+    agent_proxy:
+      http_proxy: 'http://proxy.dev.local:8080'
+      https_proxy: 'http://proxy.dev.local:8080'
+
+# =============================================================================
+# Storage Providers Configuration
+# =============================================================================
+# Full connection details for storage services (Redis, PostgreSQL).
+# Used by db_connection_* packages via from_static_config() pattern.
+# Environment variables can override individual values.
+
+storage:
+  redis:
+    host: null
+    port: null
+    username: null
+    password: null
+    db: null
+    unix_socket_path: null
+    max_connections: null
+    min_connections: null
+    health_check_interval: null
+    socket_timeout: null
+    socket_connect_timeout: null
+    retry_on_timeout: null
+    use_tls: false
+    ssl_cert_reqs: none #"none"
+    ssl_ca_certs: null
+    ssl_check_hostname: null
+    encoding: null
+    decode_responses: null
+    endpoint_auth_type: "basic"
+
+    overwrite_from_env:
+      username:
+        - REDIS_USER
+        - REDIS_USERNAME
+      port:
+        - REDIS_PORT
+        - REDIS_PORT_NUMBER
+      password: 
+        - REDIS_PASSWORD
+        - REDIS_PASS
+        - REDIS_PWD
+      db:
+        - REDIS_DB
+        - REDIS_DB_NUMBER
+      unix_socket_path:
+        - REDIS_UNIX_SOCKET_PATH
+      max_connections:
+        - REDIS_MAX_CONNECTIONS
+        - REDIS_MAX_CONNECTIONS_NUMBER
+      min_connections:
+        - REDIS_MIN_CONNECTIONS
+        - REDIS_MIN_CONNECTIONS_NUMBER
+      health_check_interval: REDIS_HEALTH_CHECK_INTERVAL
+      decode_responses: REDIS_DECODE_RESPONSES
+      encoding: REDIS_ENCODING
+      ssl_check_hostname: REDIS_SSL_CHECK_HOSTNAME
+      ssl_ca_certs: REDIS_SSL_CA_CERTS
+      retry_on_timeout: REDIS_RETRY_ON_TIMEOUT
+      socket_connect_timeout: REDIS_SOCKET_CONNECT_TIMEOUT
+      socket_timeout:
+        - REDIS_SOCKET_TIMEOUT_NUMBER
+        - REDIS_SOCKET_TIMEOUT
+      ssl_cert_reqs:
+        - REDIS_SSL_CERT_REQS
+        - REDIS_SSL_REQUIRED
+        - REDIS_SSL
+      use_tls:
+        - REDIS_USE_TLS
+        - REDIS_TLS
+        - REDIS_TLS_ENABLED
+      host:
+        - REDIS_HOST
+
+  postgres:
+    host: null      
+    port: null
+    username: null
+    password: null
+    database: null
+    schema: null #public
+    sslmode: null #disable
+    pool_size: 5    
+    max_overflow: 10    
+    pool_timeout: 30    
+    pool_recycle: 1800
+    endpoint_auth_type: "basic"
+    
+    overwrite_from_env:
+      pool_recycle: POSTGRES_POOL_RECYCLE
+      pool_timeout: POSTGRES_POOL_TIMEOUT
+      max_overflow: POSTGRES_MAX_OVERFLOW
+      pool_size: POSTGRES_POOL_SIZE
+      sslmode:
+        - POSTGRES_SSLMODE
+        - POSTGRES_SSLMODE_ENABLED
+      schema:
+        - POSTGRES_SCHEMA
+        - POSTGRES_SCHEMA_NAME
+      database:
+        - POSTGRES_DB_NAME
+        - POSTGRES_DB
+      password:
+        - POSTGRES_PASS
+        - POSTGRES_PASSWORD
+      username:
+        - POSTGRES_USERNAME
+        - POSTGRES_USER
+      port:
+        - POSTGRES_PORT_NUMBER
+        - POSTGRES_PORT
+      host:
+        - POSTGRES_HOSTNAME
+        - POSTGRES_HOST
+
+  elasticsearch:
+      # Vendor types: on-prem | elastic-cloud | elastic-transport | digital-ocean
+      vendor_type: null  # Auto-detected from cloud_id or port
+      cloud_id: null
+      base_url: null
+      host: null
+      port: null
+      scheme: null
+      endpoint_api_key: null
+      username: null
+      password: null
+      use_tls: null
+      verify_certs: null
+      ssl_show_warn: null
+      index: null
+      endpoint_auth_type: "basic"
+      verify_cluster_connection: false
+
+      overwrite_from_env:
+        host: "ELASTIC_DB_HOST"
+        port: "ELASTIC_DB_PORT"
+        username: "ELASTIC_DB_USERNAME"
+        use_tls: "ELASTIC_DB_TLS"
+        cloud_id: "ELASTIC_DB_CLOUD_ID"
+        vendor_type: "ELASTIC_DB_VENDOR_TYPE"
+        scheme: "ELASTIC_DB_SCHEMA"
+        base_url:
+          - "ELASTICSEARCH_URL"
+          - "ELASTIC_DB_URL"
+        verify_cluster_connection: ELASTIC_DB_VERIFY_CLUSTER
+        endpoint_auth_type: "ELASTIC_DB_AUTH_TYPE"
+        index: "ELASTIC_DB_INDEX"
+        ssl_show_warn: "ELASTIC_DB_SSL_SHOW_WARN"
+        verify_certs: "ELASTIC_DB_VERIFY_CERTS"
+        password: "ELASTIC_DB_PASSWORD"
+        endpoint_api_key:
+          - "ELASTICSEARCH_API_KEY"
+          - "ES_API_KEY"
+          - "OPENSEARCH_API_KEY"
+          - "ELASTIC_DB_ACCESS_KEY"
+
+# =============================================================================
+# Services Configuration (Downstream Service Configs)
+# =============================================================================
+# Unstructured configuration for downstream services.
+# Each service can have arbitrary key-value pairs accessible via:
+#   - provider.get_service_config() -> returns entire service config dict
+#   - provider.get_env_by_name("KEY") -> resolves env_KEY from config
+#
+# Convention for environment variables:
+#   env_{{NAME}}: "{{ENV_VAR_NAME}}" -> resolved via get_env_by_name(NAME)
+#
+# Example usage in code:
+#   provider = ConfluenceApiToken(static_config)
+#   service_config = provider.get_service_config()
+#   api_version = provider.get_env_by_name("api_version")  # reads env var from env_api_version
+#
+services:
+  confluence:
+    headers:
+      X-Atlassian-Token: "no-check"  # Required for write operations
+      Content-Type: "application/json"
+      Accept: "application/json"
+
+    # Default request configuration
+    default_method: "GET"
+
+    # Default query parameters for content API
+    default_expand: "body.storage,version,container"
+
+    # Pagination defaults
+    pagination:
+      limit: 25
+      start: 0
+
+    # Content type mappings
+    content_types:
+      page: "page"
+      blogpost: "blogpost"
+      comment: "comment"
+      attachment: "attachment"
+
+    # API endpoints (relative to base_url)
+    endpoints:
+      content: "/rest/api/content"
+      space: "/rest/api/space"
+      user: "/rest/api/user"
+      search: "/rest/api/content/search"
+
+  jira:
+    # Default headers
+    headers:
+      Content-Type: "application/json"
+      Accept: "application/json"
+
+    # API version
+    api_version: "2"
+
+    # Default JQL for searches
+    default_jql_order: "created DESC"
+
+    # Issue types
+    issue_types:
+      story: "Story"
+      bug: "Bug"
+      task: "Task"
+      epic: "Epic"
+      subtask: "Sub-task"
+
+    # Pagination defaults
+    pagination:
+      max_results: 50
+      start_at: 0
+
+  github:
+    # Default headers
+    headers:
+      Accept: "application/vnd.github+json"
+      X-GitHub-Api-Version: "2022-11-28"
+
+    # Pagination defaults
+    pagination:
+      per_page: 30
+      page: 1
