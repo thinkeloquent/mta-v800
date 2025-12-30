@@ -13,4 +13,4 @@ export interface IEnvStore {
     onStartup(envFile?: string): Promise<LoadResult>;
 }
 
-export { IVaultFileLogger };
+export type { IVaultFileLogger };

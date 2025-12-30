@@ -92,7 +92,7 @@ clean-ports:
 	@bash .bin/clean-ports.sh
 
 # Development - run backends in parallel (cleans ports first)
-dev_build: clean-ports build
+dev_test_build: clean-ports test build
 	@echo "Starting development servers..."
 	@echo "  Fastify:  http://localhost:$(FASTIFY_PORT)"
 	@echo "  FastAPI:  http://localhost:$(FASTAPI_PORT)"
@@ -100,14 +100,14 @@ dev_build: clean-ports build
 	@$(MAKE) -j2 dev-fastify dev-fastapi
 
 # Development - run backends in parallel (cleans ports first)
-dev: clean-ports
+dev: clean-ports build
 	@echo "Starting development servers..."
 	@echo "  Fastify:  http://localhost:$(FASTIFY_PORT)"
 	@echo "  FastAPI:  http://localhost:$(FASTAPI_PORT)"
 	@echo ""
 	@$(MAKE) dev-fastify & $(MAKE) dev-fastapi & wait
 
-test_dev:
+healthz:
 	sleep 5; \
 	.bin/healthz-check.sh || true; \
 	wait

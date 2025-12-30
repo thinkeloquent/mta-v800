@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "fastapi-server"
+version = "0.1.0"
+description = "FastAPI Server with Polyglot Integration"
+authors = ["Admin <admin@example.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+fastapi = "^0.109.0"
+uvicorn = "^0.27.0"
+vault-file = {path = "../polyglot/vault_file/py", develop = true}
+app-yaml-static-config = {path = "../polyglot/app_yaml_static_config/py", develop = true}
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
