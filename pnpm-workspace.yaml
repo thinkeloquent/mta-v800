@@ -3,3 +3,4 @@ packages:
   - 'fastify_apps/*'
   - 'fastify_server'
   - 'frontend_apps/*'
+  - 'polyglot/*/mjs'

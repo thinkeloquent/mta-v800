@@ -35,6 +35,9 @@ redis = ">=4.5.0"
 elasticsearch = ">=8.0.0"
 
 # Local packages
+vault-file = {path = "polyglot/vault_file/py", develop = true}
+app-yaml-static-config = {path = "polyglot/app_yaml_static_config/py", develop = true}
+polyglot-server = {path = "polyglot/server/py", develop = true}
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.0"
