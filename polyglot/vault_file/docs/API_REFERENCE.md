@@ -26,7 +26,7 @@ Singleton for managing environment variables.
 **TypeScript**
 ```typescript
 class EnvStore {
-  static async onStartup(envFile: string = '.env'): Promise<LoadResult>;
+  static async onStartup(envFile: string = '.env', logger?: IVaultFileLogger): Promise<LoadResult>;
   static get(key: string, defaultValue?: string): string | undefined;
   static getOrThrow(key: string): string;
   static isInitialized(): boolean;
@@ -37,7 +37,7 @@ class EnvStore {
 ```python
 class EnvStore:
     @classmethod
-    def on_startup(cls, env_file: str = ".env") -> LoadResult: ...
+    def on_startup(cls, env_file: str = ".env", logger: Optional[IVaultFileLogger] = None) -> LoadResult: ...
     @classmethod
     def get(cls, key: str, default: Optional[str] = None) -> Optional[str]: ...
     @classmethod
@@ -62,9 +62,11 @@ sdk.load_config()
 ```
 
 ### SDK Operations
-- `loadConfig()`: Loads configuration from default or configured path.
-- `loadFromPath(path)`: Loads configuration from specific path.
-- `validateFile(path)`: Validates integrity of a Vault File.
-- `describeConfig()`: Returns metadata about loaded configuration.
-- `getSecretSafe(key)`: Returns masked secret information.
-- `diagnoseEnvStore()`: Checks initialization status.
+- `loadConfig()` / `load_config()`: Loads configuration from default or configured path.
+- `loadFromPath(path)` / `load_from_path(path)`: Loads configuration from specific path.
+- `validateFile(path)` / `validate_file(path)`: Validates integrity of a Vault File.
+- `describeConfig()` / `describe_config()`: Returns metadata about loaded configuration.
+- `getSecretSafe(key)` / `get_secret_safe(key)`: Returns masked secret information.
+- `diagnoseEnvStore()` / `diagnose_env_store()`: Checks initialization status.
+- `listAvailableKeys()` / `list_available_keys()`: Returns empty list (placeholder).
+- `findMissingRequired(keys)` / `find_missing_required(keys)`: Identifies missing keys.
