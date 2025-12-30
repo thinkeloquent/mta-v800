@@ -58,7 +58,7 @@ class LoggerConfig:
         json_format: bool = None,
         output: Optional[Callable[[str], None]] = None,
     ):
-        self.level = level or os.getenv("LOG_LEVEL", "info").lower()
+        self.level = level or os.getenv("LOG_LEVEL", "debug").lower()
         self.colorize = colorize if colorize is not None else os.getenv("NO_COLOR") != "1"
         self.timestamp = timestamp
         self.json_format = json_format if json_format is not None else os.getenv("LOG_FORMAT") == "json"

@@ -41,7 +41,7 @@ const LEVEL_COLORS = {
 
 // Default configuration
 const DEFAULT_CONFIG = {
-    level: process.env.LOG_LEVEL || "info",
+    level: process.env.LOG_LEVEL || "debug",
     colorize: process.env.NO_COLOR !== "1",
     timestamp: true,
     json: process.env.LOG_FORMAT === "json",

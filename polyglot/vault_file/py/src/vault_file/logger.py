@@ -25,7 +25,7 @@ class Logger:
             formatter = logging.Formatter('%(levelname)s: %(message)s')
             handler.setFormatter(formatter)
             self._logger.addHandler(handler)
-        self._logger.setLevel(logging.INFO)
+        self._logger.setLevel(logging.DEBUG)
 
     @staticmethod
     def create(package_name: str, filename: str) -> "IVaultFileLogger":
@@ -51,7 +51,7 @@ class Logger:
             self._logger.error(self._format(message), *args)
 
 # Global level state
-_current_log_level = LogLevel.INFO
+_current_log_level = LogLevel.DEBUG
 
 def set_log_level(level: LogLevel):
     global _current_log_level

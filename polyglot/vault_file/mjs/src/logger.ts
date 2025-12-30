@@ -6,7 +6,7 @@ export enum LogLevel {
     NONE = 4
 }
 
-let currentLevel = LogLevel.INFO;
+let currentLevel = LogLevel.DEBUG;
 
 export interface IVaultFileLogger {
     debug(message: string, ...args: any[]): void;
