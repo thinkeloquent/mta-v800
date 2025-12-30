@@ -14,13 +14,18 @@ pydantic = "^2.0.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.0.0"
+pytest-asyncio = "^0.21.0"
+pytest-cov = "^4.0.0"
 black = "^23.0.0"
 ruff = "^0.0.280"
+httpx = "^0.24.0"
+fastapi = "^0.100.0"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+testpaths = ["tests", "__tests__"]
 pythonpath = ["src"]
+asyncio_mode = "auto"

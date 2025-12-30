@@ -29,7 +29,8 @@ VENV_DIR := $(MAKEFILE_DIR).venv
 PYTHON := $(if $(wildcard $(VENV_DIR)/bin/python),$(VENV_DIR)/bin/python,python)
 UVICORN := $(if $(wildcard $(VENV_DIR)/bin/uvicorn),$(VENV_DIR)/bin/uvicorn,uvicorn)
 
-.PHONY: help setup install dev dev-fastify dev-fastapi build test lint format clean clean-ports docker-up docker-down
+.PHONY: help setup install dev dev-fastify dev-fastapi build test lint format clean clean-ports docker-up docker-down \
+	test-vault-file test-vault-file-py test-vault-file-mjs test-vault-file-fastapi test-vault-file-fastify
 
 help:
 	@echo "MTA Development Commands"
@@ -47,6 +48,9 @@ help:
 	@echo "Build:"
 	@echo "  make build         - Build all projects (frontend + backends)"
 	@echo "  make test          - Run all tests"
+	@echo "  make test-vault-file     - Run vault_file tests (Python + Node.js)"
+	@echo "  make test-vault-file-py  - Run vault_file Python tests"
+	@echo "  make test-vault-file-mjs - Run vault_file Node.js tests"
 	@echo ""
 	@echo "Code Quality:"
 	@echo "  make lint          - Lint all code"
@@ -169,3 +173,46 @@ clean:
 	find . -type d -name ".pytest_cache" -exec rm -rf {} + 2>/dev/null || true
 	find . -type d -name "dist" -exec rm -rf {} + 2>/dev/null || true
 	find . -type d -name "build" -exec rm -rf {} + 2>/dev/null || true
+
+# ============================================================================
+# Vault File Tests
+# ============================================================================
+
+# Run all vault_file tests (Python + Node.js)
+test-vault-file: test-vault-file-py test-vault-file-mjs
+	@echo "All vault_file tests completed!"
+
+# Run vault_file Python unit tests
+test-vault-file-py:
+	@echo "Running vault_file Python tests..."
+	cd polyglot/vault_file/py && \
+		PYTHONPATH=src:$(PYTHONPATH) \
+		$(PYTHON) -m pytest __tests__/ -v --tb=short
+
+# Run vault_file Python tests with FastAPI integration
+test-vault-file-fastapi:
+	@echo "Running vault_file FastAPI integration tests..."
+	cd polyglot/vault_file/py && \
+		PYTHONPATH=src:$(PYTHONPATH) \
+		$(PYTHON) -m pytest __tests__/test_api.py -v --tb=short
+
+# Run vault_file Node.js unit tests
+test-vault-file-mjs:
+	@echo "Running vault_file Node.js tests..."
+	cd polyglot/vault_file/mjs && \
+		NODE_OPTIONS="--experimental-vm-modules" npx jest --passWithNoTests
+
+# Run vault_file Node.js tests with Fastify integration
+test-vault-file-fastify:
+	@echo "Running vault_file Fastify integration tests..."
+	cd polyglot/vault_file/mjs && \
+		NODE_OPTIONS="--experimental-vm-modules" npx jest __tests__/api.test.ts --passWithNoTests
+
+# Run vault_file tests with coverage
+test-vault-file-coverage:
+	@echo "Running vault_file tests with coverage..."
+	cd polyglot/vault_file/py && \
+		PYTHONPATH=src:$(PYTHONPATH) \
+		$(PYTHON) -m pytest __tests__/ -v --cov=vault_file --cov-report=html
+	cd polyglot/vault_file/mjs && \
+		NODE_OPTIONS="--experimental-vm-modules" npx jest --coverage

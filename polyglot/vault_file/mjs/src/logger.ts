@@ -15,23 +15,6 @@ export interface IVaultFileLogger {
     error(message: string, ...args: any[]): void;
 }
 
-export enum LogLevel {
-    DEBUG = 0,
-    INFO = 1,
-    WARN = 2,
-    ERROR = 3,
-    NONE = 4
-}
-
-let currentLevel = LogLevel.INFO;
-
-export interface IVaultFileLogger {
-    debug(message: string, ...args: any[]): void;
-    info(message: string, ...args: any[]): void;
-    warn(message: string, ...args: any[]): void;
-    error(message: string, ...args: any[]): void;
-}
-
 export class Logger implements IVaultFileLogger {
     private context: string;
 
