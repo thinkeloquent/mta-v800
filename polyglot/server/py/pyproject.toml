@@ -1,0 +1,14 @@
+[tool.poetry]
+name = "polyglot-server"
+version = "0.1.0"
+description = "Polyglot Server Scaffolding (Python)"
+authors = ["Admin <admin@example.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+fastapi = "^0.109.0"
+uvicorn = "^0.27.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
