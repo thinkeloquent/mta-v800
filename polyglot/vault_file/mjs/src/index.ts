@@ -15,6 +15,8 @@ export { Logger } from './logger.js';
 export * from './interfaces.js';
 export * from './sdk.js';
 export * from './sdk-types.js';
+export * from './env-store.js';
+export * from './validators.js';
 // sensitive? Plan mentioned it but file not created. Assuming sensitive logic is in core or not part of this phase unless critical.
 // Actually Plan 2.2: "Interface covers: Sensitive". But list of files to create didn't include sensitive.
 // Wait, "Files to Modify (Phase 1-2): ... sensitive.ts not listed".

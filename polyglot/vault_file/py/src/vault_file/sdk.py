@@ -40,7 +40,7 @@ class VaultFileSDK:
         self.logger.info(f"Loading config from {self.env_path}")
         try:
             result = EnvStore.on_startup(self.env_path, self.logger)
-            self.logger.info("Config loaded successfully.", result)
+            self.logger.info(f"Config loaded successfully: {result}")
             return self._success(result)
         except Exception as e:
             return self._failure(str(e), "LOAD_ERROR")

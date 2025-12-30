@@ -5,12 +5,17 @@
     "type": "module",
     "main": "src/main.mjs",
     "scripts": {
-        "start": "node src/main.mjs"
+        "start": "node src/main.mjs",
+        "test": "NODE_OPTIONS='--experimental-vm-modules' jest --passWithNoTests"
     },
     "dependencies": {
         "fastify": "^4.26.1",
         "close-with-grace": "^1.2.0",
         "glob": "^10.3.10"
+    },
+    "devDependencies": {
+        "@jest/globals": "^29.7.0",
+        "jest": "^29.7.0"
     },
     "engines": {
         "node": ">=18.0.0"
