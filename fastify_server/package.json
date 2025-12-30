@@ -12,6 +12,7 @@
         "fastify": "^4.26.1",
         "close-with-grace": "^1.2.0",
         "glob": "^10.3.10",
+        "@internal/polyglot-server": "file:../polyglot/server/mjs",
         "vault-file": "file:../polyglot/vault_file/mjs",
         "app-yaml-static-config": "file:../polyglot/app_yaml_static_config/mjs"
     },

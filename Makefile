@@ -17,9 +17,8 @@ MAKEFILE_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 # ============================================================================
 # PYTHONPATH Configuration
 # ============================================================================
-# Build PYTHONPATH with packages_py/*/src and fastapi_apps/*
+# Build PYTHONPATH with packages_py/*/src
 PYTHON_PATHS := $(shell for pkg in $(MAKEFILE_DIR)packages_py/*/src; do [ -d "$$pkg" ] && printf "%s:" "$$pkg"; done)
-PYTHON_PATHS := $(PYTHON_PATHS)$(shell for app in $(MAKEFILE_DIR)fastapi_apps/*/; do [ -d "$$app" ] && printf "%s:" "$$app"; done)
 # Remove trailing colon and export
 PYTHON_PATHS := $(PYTHON_PATHS:%:=%)
 export PYTHONPATH := $(PYTHON_PATHS):$(PYTHONPATH)

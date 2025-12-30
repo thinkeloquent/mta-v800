@@ -10,7 +10,7 @@ from typing import Any, Dict, List, Optional
 import uvicorn
 from fastapi import FastAPI, Request
 
-from logger import logger
+from .logger import logger
 
 log = logger.create("server", __file__)
 
@@ -105,6 +105,10 @@ async def start(server: FastAPI, config: Dict[str, Any]) -> None:
             log.info("Lifecycle modules loaded", {"count": len(module_files), "startupHooks": len(startup_hooks), "shutdownHooks": len(shutdown_hooks)})
         else:
             log.warn("Lifecycle directory does not exist", {"path": str(lifecycle_dir)})
+
+    # Bootstrap: autoload routes
+    from .autoload_routes import autoload_routes
+    autoload_routes(server, bootstrap)
 
     # Store hooks and config in app state for use in lifespan
     log.debug("Storing hooks and config in app state")

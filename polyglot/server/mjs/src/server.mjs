@@ -63,6 +63,10 @@ export async function start(server, config) {
         }
     }
 
+    // Bootstrap: autoload routes
+    const { autoloadRoutes } = await import("./autoload_routes.mjs");
+    await autoloadRoutes(server, bootstrap);
+
     // Run startup hooks with (server, config) BEFORE server.listen()
     log.debug("Executing startup hooks", { count: startupHooks.length });
     for (const hook of startupHooks) {

@@ -12,9 +12,8 @@ MAKEFILE_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 # ============================================================================
 # PYTHONPATH Configuration
 # ============================================================================
-# Build PYTHONPATH with packages_py/*/src and fastapi_apps/*
+# Build PYTHONPATH with packages_py/*/src
 PYTHON_PATHS := $(shell for pkg in $(MAKEFILE_DIR)packages_py/*/src; do [ -d "$$pkg" ] && printf "%s:" "$$pkg"; done)
-PYTHON_PATHS := $(PYTHON_PATHS)$(shell for app in $(MAKEFILE_DIR)fastapi_apps/*/; do [ -d "$$app" ] && printf "%s:" "$$app"; done)
 # Remove trailing colon and export
 PYTHON_PATHS := $(PYTHON_PATHS:%:=%)
 export PYTHONPATH := $(PYTHON_PATHS):$(PYTHONPATH)
@@ -26,7 +25,6 @@ PIP := $(PYTHON) -m pip
 
 # Package directories
 PACKAGES_PY_DIR := packages_py
-FASTAPI_APPS_DIR := fastapi_apps
 
 # CI mode (set CI=true for quieter output)
 CI ?= false
@@ -192,13 +190,6 @@ install-local:
 		if [ -f "$(PACKAGES_PY_DIR)/$$pkg/pyproject.toml" ]; then \
 			echo "  Installing $(PACKAGES_PY_DIR)/$$pkg..."; \
 			$(PIP) install $(PIP_QUIET) $(PIP_ARGS) -e "$(PACKAGES_PY_DIR)/$$pkg" 2>&1 | grep -v "already satisfied" || true; \
-		fi; \
-	done
-	$(SILENT)# Install fastapi_apps
-	$(SILENT)for app in $$(find $(FASTAPI_APPS_DIR) -maxdepth 1 -mindepth 1 -type d ! -name "__pycache__" ! -name "*.egg-info" -exec basename {} \; | sort); do \
-		if [ -f "$(FASTAPI_APPS_DIR)/$$app/pyproject.toml" ]; then \
-			echo "  Installing $(FASTAPI_APPS_DIR)/$$app..."; \
-			$(PIP) install $(PIP_QUIET) $(PIP_ARGS) -e "$(FASTAPI_APPS_DIR)/$$app" 2>&1 | grep -v "already satisfied" || true; \
 		fi; \
 	done
 	$(SILENT)echo "Done!"

@@ -415,15 +415,6 @@ requirements-all:
 		-exec basename {} \; | sort); do \
 		echo "-e $(PACKAGES_PY_DIR)/$$pkg" >> requirements-all.txt; \
 	done
-	@# Add fastapi_apps
-	@for app in $$(find fastapi_apps -maxdepth 1 -mindepth 1 -type d \
-		! -name "__pycache__" ! -name "*.egg-info" \
-		! -name "__STAGE__" ! -name "__SPECS__" ! -name "__REVIEW__" ! -name "__BACKUP__" \
-		-exec basename {} \; | sort); do \
-		if [ -f "fastapi_apps/$$app/pyproject.toml" ]; then \
-			echo "-e fastapi_apps/$$app" >> requirements-all.txt; \
-		fi; \
-	done
 	@echo "Done! Created requirements-all.txt"
 	@echo ""
 	@echo "Install with: pip install -r requirements-all.txt"
@@ -497,7 +488,7 @@ pip-install-constrained:
 
 # Install a specific sub-package with root constraints
 # Usage: make -f Makefile.pipx pip-install-pkg PKG=packages_py/fetch_client
-# Usage: make -f Makefile.pipx pip-install-pkg PKG=fastapi_apps/main_entry
+# Usage: make -f Makefile.pipx pip-install-pkg PKG=fastapi_server
 pip-install-pkg:
 	@if [ -z "$(PKG)" ]; then \
 		echo "Usage: make -f Makefile.pipx pip-install-pkg PKG=<package_path>"; \
@@ -549,19 +540,6 @@ pip-install-all-constrained:
 		echo "  Installing $$pkg..."; \
 		pip install $(PIP_SSL_ARGS) -c $(MAKEFILE_DIR)$(CONSTRAINTS_FILE) -e $$pkg 2>/dev/null || \
 			echo "    Warning: Failed to install $$pkg (may have missing dependencies)"; \
-	done
-	@echo ""
-	@# Install fastapi_apps packages (excluding __STAGE__, __SPECS__, etc.)
-	@echo "Installing fastapi_apps packages..."
-	@for app in $$(find fastapi_apps -maxdepth 1 -mindepth 1 -type d \
-		! -name "__pycache__" ! -name "*.egg-info" \
-		! -name "__STAGE__" ! -name "__SPECS__" ! -name "__REVIEW__" ! -name "__BACKUP__" \
-		| sort); do \
-		if [ -f "$$app/pyproject.toml" ]; then \
-			echo "  Installing $$app..."; \
-			pip install $(PIP_SSL_ARGS) -c $(MAKEFILE_DIR)$(CONSTRAINTS_FILE) -e $$app 2>/dev/null || \
-				echo "    Warning: Failed to install $$app (may have missing dependencies)"; \
-		fi; \
 	done
 	@echo ""
 	@echo "Done! All packages installed with constraints from $(CONSTRAINTS_FILE)"

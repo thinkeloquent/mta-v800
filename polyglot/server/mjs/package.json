@@ -3,7 +3,7 @@
     "version": "1.0.0",
     "description": "Polyglot Server Scaffolding (Node.js)",
     "type": "module",
-    "main": "src/main.mjs",
+    "main": "src/server.mjs",
     "scripts": {
         "start": "node src/main.mjs",
         "test": "NODE_OPTIONS='--experimental-vm-modules' jest --passWithNoTests"

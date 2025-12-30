@@ -11,7 +11,7 @@ MAKEFILE_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
 # Application settings
 APP_NAME := fastify-main-entry
-APP_DIR := $(MAKEFILE_DIR)fastify_apps/main_entry
+APP_DIR := $(MAKEFILE_DIR)fastify_server
 ENTRY_FILE := src/main.mjs
 PORT ?= 51000
 
@@ -275,7 +275,7 @@ clean-cache:
 	@echo "  - Clearing pnpm store (optional, run 'pnpm store prune' manually)..."
 	@echo "  - Removing dist directories..."
 	@find $(MAKEFILE_DIR)packages_mjs -type d -name "dist" -exec rm -rf {} + 2>/dev/null || true
-	@find $(MAKEFILE_DIR)fastify_apps -type d -name "dist" -exec rm -rf {} + 2>/dev/null || true
+	@find $(MAKEFILE_DIR)fastify_server -type d -name "dist" -exec rm -rf {} + 2>/dev/null || true
 	@echo "  - Removing build logs..."
 	@rm -f $(BUILD_LOG) $(TEST_LOG)
 	@echo "Cache cleared!"

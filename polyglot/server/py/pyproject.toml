@@ -3,6 +3,7 @@ name = "polyglot-server"
 version = "0.1.0"
 description = "Polyglot Server Scaffolding (Python)"
 authors = ["Admin <admin@example.com>"]
+packages = [{include = "polyglot_server"}]
 
 [tool.poetry.dependencies]
 python = "^3.10"
