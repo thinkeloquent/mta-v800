@@ -7,8 +7,8 @@ packages = [{include = "app"}]
 
 [tool.poetry.dependencies]
 python = "^3.11"
-fastapi = "^0.109.0"
-uvicorn = "^0.27.0"
+fastapi = "^0.115.0"
+uvicorn = {extras = ["standard"], version = "^0.32.0"}
 vault-file = {path = "../polyglot/vault_file/py", develop = true}
 app-yaml-static-config = {path = "../polyglot/app_yaml_static_config/py", develop = true}
 polyglot-server = {path = "../polyglot/server/py", develop = true}
