@@ -1,6 +1,9 @@
 import fp from 'fastify-plugin';
 import { AppYamlConfig, AppYamlConfigSDK } from 'app-yaml-static-config';
 import * as path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // This file matches the signature bound by `server.mjs`:
 // if (module.onStartup) startupHooks.push(module.onStartup);
@@ -11,7 +14,7 @@ export async function onStartup(server, config) {
     // In this context, 'server' is the Fastify instance
 
     // We can assume config is accessible or derived
-    const configDir = process.env.CONFIG_DIR || path.join(process.cwd(), '..', 'common', 'config');
+    const configDir = process.env.CONFIG_DIR || path.join(__dirname, '..', '..', '..', 'common', 'config');
 
     server.log.debug({ configDir }, "Initializing Configuration");
 

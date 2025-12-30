@@ -10,7 +10,7 @@ async def onStartup(app: FastAPI, config: dict):
     # For this example, let's assume a 'config' folder at root, which is parent of this lifecycle folder's parent
     # But usually configured via env var or passed in config
     
-    config_dir = os.getenv('CONFIG_DIR', os.path.join(os.getcwd(), '..', 'common', 'config'))
+    config_dir = os.getenv('CONFIG_DIR', os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..', 'common', 'config'))
     env = os.getenv('APP_ENV', 'dev')
 
     # Ensure config dir exists or fail gracefully/log
