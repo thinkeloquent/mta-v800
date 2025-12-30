@@ -2,6 +2,9 @@ import asyncio
 import os
 from fastapi import Request
 from server import init, start
+from logger import logger
+
+log = logger.create("main", __file__)
 
 config = {
     "title": "My API",
@@ -17,22 +20,29 @@ config = {
     }
 }
 
+log.info("Initializing application", {"title": config["title"]})
 server = init(config)
 
+log.debug("Registering routes")
+
+
 @server.get("/")
-async def health(request: Request):
+async def root(request: Request):
+    log.trace("Request received", {"path": "/", "method": "GET"})
     return {
-        "status": "ok", 
+        "status": "ok",
         "state": {
             "user": getattr(request.state, "user", None),
             "role": getattr(request.state, "role", None)
         }
     }
+
 
 @server.get("/health")
 async def health(request: Request):
+    log.trace("Health check request", {"path": "/health", "method": "GET"})
     return {
-        "status": "ok", 
+        "status": "ok",
         "state": {
             "user": getattr(request.state, "user", None),
             "role": getattr(request.state, "role", None)
@@ -40,10 +50,13 @@ async def health(request: Request):
     }
 
 
-async def main():
+log.info("Routes registered", {"routes": ["/", "/health"]})
 
-    print(f"Starting server on {config['host']}:{config['port']}...")
+
+async def main():
+    log.info("Starting server", {"host": config["host"], "port": config["port"]})
     await start(server, config)
+
 
 if __name__ == "__main__":
     asyncio.run(main())

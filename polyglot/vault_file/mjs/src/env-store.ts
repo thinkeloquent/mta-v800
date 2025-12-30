@@ -3,18 +3,22 @@ import path from 'path';
 import { LoadResult } from './domain.js';
 import { parseEnvFile } from './core.js';
 import { EnvKeyNotFoundError } from './validators.js';
+import { IVaultFileLogger, getLogger, Logger } from './logger.js';
 
 export class EnvStore {
   private static instance: EnvStore;
   private store: Record<string, string> = {};
   private _initialized = false;
   private _totalVarsLoaded = 0;
+  private logger: IVaultFileLogger;
 
-  private constructor() {}
+  private constructor() {
+    this.logger = getLogger();
+  }
 
   public static getInstance(): EnvStore {
     if (!EnvStore.instance) {
-        EnvStore.instance = new EnvStore();
+      EnvStore.instance = new EnvStore();
     }
     return EnvStore.instance;
   }
@@ -24,39 +28,41 @@ export class EnvStore {
    * Priority: process.env > Internal Store
    * (Standard Node.js behavior: existing env vars are not overwritten by .env)
    */
-  public static async onStartup(envFile: string = '.env'): Promise<LoadResult> {
+  public static async onStartup(envFile: string = '.env', logger?: IVaultFileLogger): Promise<LoadResult> {
     const instance = EnvStore.getInstance();
+    if (logger) {
+      instance.logger = logger;
+    } else if (!instance.logger || instance.logger === getLogger()) {
+      // Create default logger if none provided and still using global default
+      instance.logger = Logger.create('vault-file', 'env-store');
+    }
+
+    instance.logger.info(`Starting EnvStore initialization from ${envFile}...`);
     instance._initialized = true;
 
     // Load from .env file
     if (fs.existsSync(envFile)) {
-        const fileVars = parseEnvFile(envFile);
-        for (const [key, value] of Object.entries(fileVars)) {
-            // Only set if not already in store (which is empty at start)
-            // But what about process.env?
-            // "Node.js: process.env > Store"
-            // So we store it in our internal store?
-            // Or we check process.env in get()?
-            
-            // Let's populate store with file vars.
-            // But if process.env has it, that takes precedence?
-            instance.store[key] = value;
-        }
+      instance.logger.debug(`Found env file at ${envFile}, parsing...`);
+      const fileVars = parseEnvFile(envFile);
+      const count = Object.keys(fileVars).length;
+      instance.logger.debug(`Parsed ${count} variables from file.`);
+
+      for (const [key, value] of Object.entries(fileVars)) {
+        // Only set if not already in store (which is empty at start)
+        instance.store[key] = value;
+      }
+    } else {
+      instance.logger.warn(`Env file not found at ${envFile}`);
     }
-    
-    // In strict Node logic "process.env > .env", usually .env libraries don't overwrite process.env.
-    // So if I have:
-    // process.env.FOO = 'sys'
-    // .env has FOO=file
-    // get('FOO') should return 'sys'.
-    
-    // Implementation of get():
-    // return process.env[key] || this.store[key]
-    
-    instance._totalVarsLoaded = Object.keys(process.env).length + Object.keys(instance.store).length; // Rough count
-    
+
+    const processEnvCount = Object.keys(process.env).length;
+    const storeCount = Object.keys(instance.store).length;
+    instance._totalVarsLoaded = processEnvCount + storeCount; // Rough count
+
+    instance.logger.info(`EnvStore initialized. Total accessible vars (approx): ${instance._totalVarsLoaded}`);
+
     return {
-        totalVarsLoaded: instance._totalVarsLoaded
+      totalVarsLoaded: instance._totalVarsLoaded
     };
   }
 
@@ -64,23 +70,27 @@ export class EnvStore {
     const instance = EnvStore.getInstance();
     // process.env takes precedence
     if (process.env[key] !== undefined) {
-        return process.env[key];
+      return process.env[key];
     }
     if (instance.store[key] !== undefined) {
-        return instance.store[key];
+      return instance.store[key];
     }
+    instance.logger.debug(`Env var '${key}' not found, using default: ${defaultValue}`);
     return defaultValue;
   }
 
   public static getOrThrow(key: string): string {
     const val = EnvStore.get(key);
     if (val === undefined) {
-        throw new EnvKeyNotFoundError(key);
+      const instance = EnvStore.getInstance();
+      instance.logger.error(`Required env var '${key}' missing.`);
+      throw new EnvKeyNotFoundError(key);
     }
     return val;
   }
 
   public static isInitialized(): boolean {
-      return EnvStore.getInstance()._initialized;
+    return EnvStore.getInstance()._initialized;
   }
 }
+

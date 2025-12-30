@@ -1,8 +1,17 @@
-export * from './domain.js';
-export * from './env-store.js';
-export * from './validators.js';
-export * from './core.js';
 export * from './logger.js';
+// Logger class is exported from logger.js, so * covers it, but explicit export is fine too if index.ts doesn't.
+// Wait, export * from ./logger.js exports named exports. If Logger is named export, it's exported.
+// I will check logger.ts to see if Logger is exported. Yes, "export class Logger".
+// So "export * from './logger.js'" is enough.
+// The previous replace failed because I was redundant or context mismatch?
+// "target content not found in file".
+// Ah, line 3 was "export * from './logger.js';".
+// I added "export { Logger } from './logger.js';" in previous attempt content but that line didn't exist in target?
+// Wait, I see "export * from './logger.js';" in previous content.
+// I will just remove the explicit export line if it failed, or verify content.
+// Let's just view index.ts to be sure.
+
+export { Logger } from './logger.js';
 export * from './interfaces.js';
 export * from './sdk.js';
 export * from './sdk-types.js';

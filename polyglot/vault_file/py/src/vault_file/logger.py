@@ -15,49 +15,51 @@ class IVaultFileLogger(Protocol):
     def warn(self, message: str, *args: Any): ...
     def error(self, message: str, *args: Any): ...
 
-class ConsoleLogger:
-    def __init__(self):
-        self.level = LogLevel.INFO
+class Logger:
+    def __init__(self, package_name: str, filename: str):
+        self.context = f"[{package_name}:{filename}]"
         self._logger = logging.getLogger("vault_file")
-        handler = logging.StreamHandler()
-        formatter = logging.Formatter('%(levelname)s: %(message)s')
-        handler.setFormatter(formatter)
-        self._logger.addHandler(handler)
+        # Ensure handler exists
+        if not self._logger.handlers:
+            handler = logging.StreamHandler()
+            formatter = logging.Formatter('%(levelname)s: %(message)s')
+            handler.setFormatter(formatter)
+            self._logger.addHandler(handler)
         self._logger.setLevel(logging.INFO)
 
-    def set_level(self, level: LogLevel):
-        self.level = level
-        if level == LogLevel.DEBUG:
-            self._logger.setLevel(logging.DEBUG)
-        elif level == LogLevel.INFO:
-            self._logger.setLevel(logging.INFO)
-        elif level == LogLevel.WARN:
-            self._logger.setLevel(logging.WARNING)
-        elif level == LogLevel.ERROR:
-            self._logger.setLevel(logging.ERROR)
-        elif level == LogLevel.NONE:
-            self._logger.setLevel(logging.CRITICAL + 1)
+    @staticmethod
+    def create(package_name: str, filename: str) -> "IVaultFileLogger":
+        return Logger(package_name, filename)
+
+    def _format(self, message: str) -> str:
+        return f"{self.context} {message}"
 
     def debug(self, message: str, *args: Any):
-        if self.level <= LogLevel.DEBUG:
-            self._logger.debug(message, *args)
+        if _current_log_level <= LogLevel.DEBUG:
+            self._logger.debug(self._format(message), *args)
 
     def info(self, message: str, *args: Any):
-        if self.level <= LogLevel.INFO:
-            self._logger.info(message, *args)
+        if _current_log_level <= LogLevel.INFO:
+            self._logger.info(self._format(message), *args)
 
     def warn(self, message: str, *args: Any):
-        if self.level <= LogLevel.WARN:
-            self._logger.warning(message, *args)
+        if _current_log_level <= LogLevel.WARN:
+            self._logger.warning(self._format(message), *args)
 
     def error(self, message: str, *args: Any):
-        if self.level <= LogLevel.ERROR:
-            self._logger.error(message, *args)
+        if _current_log_level <= LogLevel.ERROR:
+            self._logger.error(self._format(message), *args)
 
-_logger_instance = ConsoleLogger()
-
-def get_logger() -> IVaultFileLogger:
-    return _logger_instance
+# Global level state
+_current_log_level = LogLevel.INFO
 
 def set_log_level(level: LogLevel):
-    _logger_instance.set_level(level)
+    global _current_log_level
+    _current_log_level = level
+    logging.getLogger("vault_file").setLevel(logging.DEBUG if level == LogLevel.DEBUG else logging.INFO)
+
+_default_logger = Logger.create("vault_file", "default")
+
+def get_logger() -> IVaultFileLogger:
+    return _default_logger
+

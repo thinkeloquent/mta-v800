@@ -1,4 +1,7 @@
 import { init, start } from "./server.mjs";
+import logger from "./logger.mjs";
+
+const log = logger.create("main", import.meta.url);
 
 const config = {
   title: "My API",
@@ -14,17 +17,26 @@ const config = {
   },
 };
 
+log.info("Initializing application", { title: config.title });
 const server = init(config);
 
-server.get("/", async (request) => ({
-  status: "ok",
-  state: request.state,
-}));
+log.debug("Registering routes");
+server.get("/", async (request) => {
+  log.trace("Request received", { path: "/", requestId: request.id });
+  return {
+    status: "ok",
+    state: request.state,
+  };
+});
 
-server.get("/health", async (request) => ({
-  status: "ok",
-  state: request.state,
-}));
+server.get("/health", async (request) => {
+  log.trace("Health check request", { path: "/health", requestId: request.id });
+  return {
+    status: "ok",
+    state: request.state,
+  };
+});
+log.info("Routes registered", { routes: ["/", "/health"] });
 
-console.log(`Starting server on ${config.host}:${config.port}...`);
+log.info("Starting server", { host: config.host, port: config.port });
 await start(server, config);
