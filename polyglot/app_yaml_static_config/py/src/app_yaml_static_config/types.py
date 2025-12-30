@@ -15,5 +15,6 @@ class InitOptions:
                  logger: Optional[ILogger] = None):
         self.files = files
         self.config_dir = config_dir
-        self.app_env = app_env
+        # Normalize app_env to lowercase (e.g., "DEV" -> "dev")
+        self.app_env = app_env.lower() if app_env else None
         self.logger = logger

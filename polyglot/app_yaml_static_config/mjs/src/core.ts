@@ -17,7 +17,12 @@ export class AppYamlConfig {
             throw new Error("This class is a singleton!");
         }
         this._logger = options.logger || createLogger("app-yaml-static-config", "core.ts");
-        this._loadConfig(options);
+        // Normalize appEnv to lowercase (e.g., "DEV" -> "dev")
+        const normalizedOptions: InitOptions = {
+            ...options,
+            appEnv: options.appEnv?.toLowerCase()
+        };
+        this._loadConfig(normalizedOptions);
         AppYamlConfig._instance = this;
     }
 
