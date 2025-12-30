@@ -1,0 +1,12 @@
+# Deeply nested configuration for testing getNested
+deeply:
+  nested:
+    config:
+      value: found
+      array:
+        - item1
+        - item2
+        - item3
+      object:
+        key1: value1
+        key2: value2

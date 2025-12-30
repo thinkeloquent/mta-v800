@@ -1,0 +1,19 @@
+# Override configuration for testing merge behavior
+app:
+  environment: production
+  debug: false
+
+providers:
+  anthropic:
+    max_tokens: 8192
+  google:
+    api_key: null
+    model: gemini-pro
+
+services:
+  database:
+    port: 5433
+    ssl: true
+
+global:
+  timeout: 60000
