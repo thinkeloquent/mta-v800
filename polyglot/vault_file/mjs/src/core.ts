@@ -1,6 +1,9 @@
 import yaml from 'js-yaml';
 import fs from 'fs';
 import { VaultFile } from './domain.js';
+import { Logger, IVaultFileLogger } from './logger.js';
+
+const log: IVaultFileLogger = Logger.create('vault-file', 'core.ts');
 
 /**
  * Convert camelCase string to snake_case
@@ -39,62 +42,130 @@ function normalizeVersion(version: string): string {
 }
 
 export function toJSON(vaultFile: VaultFile): string {
-    const transformed = transformKeys(vaultFile, toSnakeCase);
-    return JSON.stringify(transformed, null, 2);
+    log.debug('Converting VaultFile to JSON');
+    try {
+        const transformed = transformKeys(vaultFile, toSnakeCase);
+        const result = JSON.stringify(transformed, null, 2);
+        log.debug('Successfully converted VaultFile to JSON', { length: result.length });
+        return result;
+    } catch (err) {
+        log.error('Failed to convert VaultFile to JSON', err);
+        throw err;
+    }
 }
 
 export function fromJSON(jsonStr: string): any {
-    const parsed = JSON.parse(jsonStr);
-    const transformed = transformKeys(parsed, toCamelCase);
+    log.debug('Parsing JSON to VaultFile', { inputLength: jsonStr?.length ?? 0 });
 
-    // Normalize version if present
-    if (transformed.header && transformed.header.version) {
-        transformed.header.version = normalizeVersion(transformed.header.version);
+    if (!jsonStr || typeof jsonStr !== 'string') {
+        log.error('Invalid JSON input: input is empty or not a string');
+        throw new Error('Invalid JSON input: input is empty or not a string');
     }
 
-    return transformed;
+    try {
+        const parsed = JSON.parse(jsonStr);
+        log.debug('JSON parsed successfully');
+
+        const transformed = transformKeys(parsed, toCamelCase);
+
+        // Normalize version if present
+        if (transformed.header && transformed.header.version) {
+            const originalVersion = transformed.header.version;
+            transformed.header.version = normalizeVersion(transformed.header.version);
+            log.debug('Normalized version', { from: originalVersion, to: transformed.header.version });
+        }
+
+        log.debug('Successfully parsed JSON to VaultFile structure');
+        return transformed;
+    } catch (err) {
+        log.error('Failed to parse JSON', err);
+        throw err;
+    }
 }
 
 export function parseEnvFile(filePath: string): Record<string, string> {
+    log.debug('Attempting to parse env file', { filePath });
+
+    if (!filePath) {
+        log.error('parseEnvFile called with empty or null filePath');
+        throw new Error('File path is required');
+    }
+
     if (!fs.existsSync(filePath)) {
+        log.warn('Env file not found, returning empty object', { filePath });
         return {};
     }
-    const content = fs.readFileSync(filePath, 'utf-8');
-    // Simple parsing matching python logic roughly, or use dotenv.
-    // Use dotenv for robustness if permitted, but we have dotenv dependency.
-    // Requirement says logic to parse .env.
-    // Let's use simple logic to match our Python simple logic, OR use dotenv.parse
-    // Plan says "dotenv: parse .env files".
 
-    // Implementation note: dotenv.parse returns an object.
-    // But dotenv doesn't support comment filtering exactly same way as custom?
-    // Actually dotenv is standard. I'll use it or manual to match Python core.py exactly.
-    // Python core.py implementation was manual.
-    // Let's use manual to match Python's behavior if needed, or better, standard dotenv.
-    // I will use strict manual implementation to avoid dep if simple, but I added dotenv to package.json.
-    // Let's use dotenv for reliability.
+    log.info('Loading env file', { filePath });
 
-    // Wait, I can't import 'dotenv' easily in ESM to just parse without configuring?
-    // import { parse } from 'dotenv'; 
-    // checking dotenv docs... yes, `import { parse } from 'dotenv'` works.
+    let content: string;
+    try {
+        content = fs.readFileSync(filePath, 'utf-8');
+        log.debug('File read successfully', { filePath, contentLength: content.length });
+    } catch (err) {
+        log.error('Failed to read env file', { filePath }, err as Error);
+        throw err;
+    }
 
-    // Actually, let's stick to the manual logic I wrote in python for strict parity if that was intent,
-    // but standard library is better. I'll use manual to be safe on "no magic".
+    if (!content || content.trim().length === 0) {
+        log.warn('Env file is empty', { filePath });
+        return {};
+    }
 
     const env: Record<string, string> = {};
     const lines = content.split('\n');
+    let lineNumber = 0;
+    let parsedCount = 0;
+    let skippedCount = 0;
+    let errorCount = 0;
+
     for (const line of lines) {
+        lineNumber++;
         const trimmed = line.trim();
-        if (!trimmed || trimmed.startsWith('#')) continue;
-        const idx = trimmed.indexOf('=');
-        if (idx !== -1) {
-            const key = trimmed.substring(0, idx).trim();
-            let val = trimmed.substring(idx + 1).trim();
-            if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
-                val = val.substring(1, val.length - 1);
-            }
-            env[key] = val;
+
+        // Skip empty lines and comments
+        if (!trimmed || trimmed.startsWith('#')) {
+            skippedCount++;
+            continue;
         }
+
+        const idx = trimmed.indexOf('=');
+        if (idx === -1) {
+            log.warn('Skipping malformed line (no "=" found)', { filePath, lineNumber, line: trimmed });
+            errorCount++;
+            continue;
+        }
+
+        const key = trimmed.substring(0, idx).trim();
+        if (!key) {
+            log.warn('Skipping line with empty key', { filePath, lineNumber, line: trimmed });
+            errorCount++;
+            continue;
+        }
+
+        let val = trimmed.substring(idx + 1).trim();
+
+        // Remove surrounding quotes
+        if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+            val = val.substring(1, val.length - 1);
+        }
+
+        env[key] = val;
+        parsedCount++;
+        log.debug('Parsed env var', { key, lineNumber });
     }
+
+    log.info('Finished parsing env file', {
+        filePath,
+        totalLines: lineNumber,
+        parsedVars: parsedCount,
+        skippedLines: skippedCount,
+        malformedLines: errorCount
+    });
+
+    if (errorCount > 0) {
+        log.warn('Some lines could not be parsed', { filePath, malformedLines: errorCount });
+    }
+
     return env;
 }
