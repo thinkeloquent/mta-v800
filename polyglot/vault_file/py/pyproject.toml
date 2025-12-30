@@ -1,0 +1,26 @@
+[tool.poetry]
+name = "vault-file"
+version = "1.0.0"
+description = "Polyglot Vault File and EnvStore for Python"
+authors = ["Deepmind Agent <agent@deepmind.com>"]
+readme = "README.md"
+packages = [{include = "vault_file", from = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+python-dotenv = "^1.0.0"
+pyyaml = "^6.0.0"
+pydantic = "^2.0.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.0.0"
+black = "^23.0.0"
+ruff = "^0.0.280"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
