@@ -5,6 +5,7 @@
  */
 export async function mount(server) {
   server.get("/health", async (request, reply) => {
-    return { message: "Hello from autoloaded route!", framework: "fastify" };
+    const buildId = request.state?.build_info?.id?.trim() || "no build id found";
+    return { message: "Hello from autoloaded route!", framework: "fastify", build_id: buildId };
   });
 }

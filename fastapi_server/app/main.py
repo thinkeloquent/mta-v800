@@ -34,6 +34,14 @@ config = {
         "load_env": str(BASE_DIR / "config" / "environment"),
         "lifecycle": str(BASE_DIR / "config" / "lifecycle"),
         "routes": str(BASE_DIR / "routes")
+    },
+    "initial_state": {
+        "build_info": {
+            "build_id": os.getenv("BUILD_ID", ""),
+            "build_version": os.getenv("BUILD_VERSION", ""),
+            "app_env": os.getenv("APP_ENV", ""),
+            "id": f"{os.getenv('BUILD_ID', '')} {os.getenv('BUILD_VERSION', '')} {os.getenv('APP_ENV', '')}"
+        }
     }
 }
 

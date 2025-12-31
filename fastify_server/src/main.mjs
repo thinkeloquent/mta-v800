@@ -15,6 +15,14 @@ const config = {
     lifecycle: path.join(ROOT_DIR, "config/lifecycle"),
     routes: path.join(ROOT_DIR, "routes"),
   },
+  initial_state: {
+    build_info: {
+      build_id: process.env.BUILD_ID || "",
+      build_version: process.env.BUILD_VERSION || "",
+      app_env: process.env.APP_ENV || "",
+      id: `${process.env.BUILD_ID || ""} ${process.env.BUILD_VERSION || ""} ${process.env.APP_ENV || ""}`,
+    },
+  },
 };
 
 try {
