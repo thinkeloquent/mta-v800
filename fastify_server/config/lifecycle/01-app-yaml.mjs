@@ -22,10 +22,11 @@ export async function onStartup(server, config) {
     // although this hook is called just before listen().
 
     // Since we are inside an async startup hook, we can just await the initialization
+    const appEnv = (process.env.APP_ENV || 'dev').toLowerCase();  // Normalize to lowercase
     await AppYamlConfig.initialize({
         files: [
             path.join(configDir, 'base.yml'),
-            path.join(configDir, `server.${process.env.APP_ENV || 'dev'}.yaml`)
+            path.join(configDir, `server.${appEnv}.yaml`)
         ],
         configDir
     });

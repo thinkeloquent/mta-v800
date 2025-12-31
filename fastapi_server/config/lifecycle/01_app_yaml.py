@@ -11,7 +11,7 @@ async def onStartup(app: FastAPI, config: dict):
     # But usually configured via env var or passed in config
     
     config_dir = os.getenv('CONFIG_DIR', os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..', 'common', 'config'))
-    env = os.getenv('APP_ENV', 'dev')
+    env = os.getenv('APP_ENV', 'dev').lower()  # Normalize to lowercase
 
     # Ensure config dir exists or fail gracefully/log
     if not os.path.exists(config_dir):
