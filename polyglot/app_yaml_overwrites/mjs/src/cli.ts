@@ -1,7 +1,5 @@
-
 import { program } from 'commander';
-import { ConfigSDK } from './sdk.js';
-import { ComputeScope } from 'runtime-template-resolver';
+import { ConfigSDK, ComputeScope } from './sdk.js';
 
 program
     .name('config-sdk')

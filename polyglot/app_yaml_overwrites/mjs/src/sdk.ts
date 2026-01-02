@@ -1,32 +1,61 @@
-import { AppYamlConfig } from 'app-yaml-static-config';
-import { createResolver, ComputeScope } from 'runtime-template-resolver';
 import { Logger } from './logger.js';
-import { ContextBuilder, ContextExtender } from './context-builder.js';
+import { ContextBuilder, ContextExtender, RequestLike } from './context-builder.js';
 import { applyOverwrites } from './overwrite-merger.js';
-import { FastifyRequest } from 'fastify';
+
+// Re-export RequestLike for external use
+export type { RequestLike };
+
+/**
+ * Compute scope for resolution.
+ * STARTUP: Resolve at application startup (no request context)
+ * REQUEST: Resolve per-request (has request context)
+ */
+export enum ComputeScope {
+    STARTUP = 'STARTUP',
+    REQUEST = 'REQUEST'
+}
+
+/**
+ * Optional external config provider interface.
+ * Implementations can provide config from various sources (YAML files, env, etc.)
+ */
+interface ConfigProvider {
+    getAll(): any;
+}
 
 export interface ConfigSDKOptions {
-    configDir?: string;  // For AppYamlConfig
-    configPath?: string; // For standalone single file
+    /** Initial config object (alternative to configProvider) */
+    config?: any;
+    /** External config provider (e.g., AppYamlConfig) */
+    configProvider?: ConfigProvider;
+    /** Directory for config files (reserved for future use) */
+    configDir?: string;
+    /** Path to single config file (reserved for future use) */
+    configPath?: string;
+    /** Context extenders for building resolution context */
     contextExtenders?: ContextExtender[];
-    validateSchema?: boolean; // Reserved for future validation logic
+    /** Reserved for future schema validation */
+    validateSchema?: boolean;
 }
 
 export class ConfigSDK {
-    private static instance: ConfigSDK;
+    private static instance: ConfigSDK | undefined;
     private logger: Logger;
-    private appYaml: any;
-    private registry: any; // ContextRegistry instance
-    private resolver: any; // ContextResolver instance
+    private configProvider?: ConfigProvider;
     private contextExtenders: ContextExtender[];
 
     // State
     private rawConfig: any;
     private initialized: boolean = false;
 
-    private constructor(options: ConfigSDKOptions) {
+    constructor(options: ConfigSDKOptions = {}) {
         this.logger = Logger.create('config-sdk', 'sdk.ts');
         this.contextExtenders = options.contextExtenders || [];
+        this.configProvider = options.configProvider;
+        // Allow direct config injection
+        if (options.config) {
+            this.rawConfig = options.config;
+        }
     }
 
     // Recommendation 1: Async Initialize
@@ -51,32 +80,18 @@ export class ConfigSDK {
     private async bootstrap(options: ConfigSDKOptions) {
         this.logger.debug("Bootstrapping ConfigSDK...");
 
-        // 1. Load Static Config
-        // In a real scenario, this might need dynamic import or injection if AppYamlConfig isn't global
-        // Assuming AppYamlConfig is the standard singleton pattern for now.
-        const appYamlInstance = AppYamlConfig.getInstance();
+        // Load config from provider if available and not already set
+        if (!this.rawConfig && this.configProvider) {
+            this.rawConfig = this.configProvider.getAll();
+        }
 
-        // Ideally, AppYamlConfig should expose a way to set configDir if not already set.
-        // For standalone, we might simply be reading a file if AppYamlConfig supports it.
+        // Default to empty config if none provided
+        if (!this.rawConfig) {
+            this.rawConfig = {};
+            this.logger.debug("No config provided, using empty config");
+        }
 
-        this.rawConfig = appYamlInstance.getAll();
         this.logger.debug("Raw config loaded", { keys: Object.keys(this.rawConfig) });
-
-        // 2. Setup Resolver (Assuming runtime-template-resolver pattern)
-        // We need the registry. In standard server, this is global or passed in.
-        // For this SDK, we might need to rely on the environment being set previously,
-        // OR create a new empty registry if standalone.
-
-        // NOTE: This implementation assumes the Registry is populated elsewhere (autoloading).
-        // If standalone, we might need to manually trigger autoload.
-
-        // For now, we'll assume we can pass a registry or import the default one if available.
-        // Since we don't have a direct 'Registry' import here, we rely on the `createResolver` factory.
-        // In a full implementation, we'd import { globalRegistry } from 'runtime-template-resolver/registry'.
-
-        // Placeholder for registry access - assuming passed via options or implicitly global for prototype.
-        this.registry = { list: () => [] }; // config-sdk acts as consumer, not registry owner usually.
-
         this.initialized = true;
     }
 
@@ -84,33 +99,36 @@ export class ConfigSDK {
         return this.rawConfig;
     }
 
-    public async getResolved(scope: ComputeScope, request?: FastifyRequest): Promise<any> {
+    public async getResolved(scope: ComputeScope, request?: RequestLike): Promise<any> {
         if (!this.initialized) throw new Error("SDK not initialized");
 
+        // Build context for resolution
         const context = await ContextBuilder.build({
             config: this.rawConfig,
             app: this.rawConfig.app || {},
             request: request
         }, this.contextExtenders);
 
-        // Create a NEW resolver instance for this resolution (standard pattern)
-        // In v800 `runtime_template_resolver`, createResolver takes a registry.
-        // We might need to ensure we have that registry.
-        const resolver = createResolver(this.registry); // Using the registry we have/found
+        // Apply overwrites from context
+        // Note: Full template resolution would require runtime-template-resolver
+        // This standalone version only handles overwrite merging
+        const overwriteSection = this.rawConfig.overwrite_from_context;
+        if (overwriteSection) {
+            return applyOverwrites(this.rawConfig, overwriteSection);
+        }
 
-        const resolved = await resolver.resolveObject(
-            this.rawConfig,
-            context,
-            scope
-        );
-
-        // Merge overwrites is currently implicit in 'resolveObject' if it follows v800 spec
-        // But if we need explicit post-process merging (Feature 2.3):
-        return applyOverwrites(resolved, resolved.overwrite_from_context);
+        return this.rawConfig;
     }
 
     public async toJSON(options: { maskSecrets?: boolean } = {}): Promise<any> {
         // Basic export
         return this.getRaw();
+    }
+
+    /**
+     * Reset the singleton instance (primarily for testing).
+     */
+    public static resetInstance(): void {
+        ConfigSDK.instance = undefined;
     }
 }

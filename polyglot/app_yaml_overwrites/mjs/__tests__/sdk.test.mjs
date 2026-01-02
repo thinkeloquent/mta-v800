@@ -9,36 +9,13 @@
  * - Log verification (hyper-observability)
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { createSampleConfig, createMockAppYamlConfig, createLoggerSpy } from './helpers/test-utils.mjs';
-
-// Mock the external dependencies
-vi.mock('app-yaml-static-config', () => ({
-    AppYamlConfig: {
-        getInstance: vi.fn()
-    }
-}));
-
-vi.mock('runtime-template-resolver', () => ({
-    createResolver: vi.fn(() => ({
-        resolveObject: vi.fn(async (config) => config)
-    })),
-    ComputeScope: {
-        STARTUP: 'STARTUP',
-        REQUEST: 'REQUEST'
-    }
-}));
-
-// Import after mocks are set up
-import { ConfigSDK } from '../src/sdk.ts';
-import { AppYamlConfig } from 'app-yaml-static-config';
+import { createSampleConfig } from './helpers/test-utils.mjs';
+import { ConfigSDK, ComputeScope } from '../src/sdk.ts';
 
 describe('ConfigSDK', () => {
     beforeEach(() => {
         // Reset singleton before each test
-        ConfigSDK.instance = undefined;
-
-        // Reset mocks
-        vi.clearAllMocks();
+        ConfigSDK.resetInstance();
 
         // Suppress console output during tests
         vi.spyOn(console, 'log').mockImplementation(() => {});
@@ -47,6 +24,7 @@ describe('ConfigSDK', () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
+        ConfigSDK.resetInstance();
     });
 
     // =========================================================================
@@ -56,22 +34,14 @@ describe('ConfigSDK', () => {
     describe('Statement Coverage', () => {
         it('should create instance with initialize()', async () => {
             const mockConfig = createSampleConfig();
-            AppYamlConfig.getInstance.mockReturnValue({
-                getAll: () => mockConfig
-            });
-
-            const sdk = await ConfigSDK.initialize({});
+            const sdk = await ConfigSDK.initialize({ config: mockConfig });
 
             expect(sdk).toBeInstanceOf(ConfigSDK);
         });
 
         it('should return raw config with getRaw()', async () => {
             const mockConfig = { key: 'value' };
-            AppYamlConfig.getInstance.mockReturnValue({
-                getAll: () => mockConfig
-            });
-
-            const sdk = await ConfigSDK.initialize({});
+            const sdk = await ConfigSDK.initialize({ config: mockConfig });
             const raw = sdk.getRaw();
 
             expect(raw).toEqual(mockConfig);
@@ -79,14 +49,19 @@ describe('ConfigSDK', () => {
 
         it('should return JSON with toJSON()', async () => {
             const mockConfig = { data: 'value' };
-            AppYamlConfig.getInstance.mockReturnValue({
-                getAll: () => mockConfig
-            });
-
-            const sdk = await ConfigSDK.initialize({});
+            const sdk = await ConfigSDK.initialize({ config: mockConfig });
             const json = await sdk.toJSON();
 
             expect(json).toEqual(mockConfig);
+        });
+
+        it('should work with configProvider', async () => {
+            const mockConfig = { provider: 'test' };
+            const configProvider = { getAll: () => mockConfig };
+            const sdk = await ConfigSDK.initialize({ configProvider });
+            const raw = sdk.getRaw();
+
+            expect(raw).toEqual(mockConfig);
         });
     });
 
@@ -97,12 +72,9 @@ describe('ConfigSDK', () => {
     describe('Branch Coverage', () => {
         it('should return existing instance on second initialize()', async () => {
             const mockConfig = { key: 'value' };
-            AppYamlConfig.getInstance.mockReturnValue({
-                getAll: () => mockConfig
-            });
 
-            const sdk1 = await ConfigSDK.initialize({});
-            const sdk2 = await ConfigSDK.initialize({});
+            const sdk1 = await ConfigSDK.initialize({ config: mockConfig });
+            const sdk2 = await ConfigSDK.initialize({ config: { different: 'config' } });
 
             expect(sdk1).toBe(sdk2);
         });
@@ -112,15 +84,16 @@ describe('ConfigSDK', () => {
         });
 
         it('should return instance with getInstance() after initialize()', async () => {
-            const mockConfig = {};
-            AppYamlConfig.getInstance.mockReturnValue({
-                getAll: () => mockConfig
-            });
-
-            await ConfigSDK.initialize({});
+            await ConfigSDK.initialize({ config: {} });
             const sdk = ConfigSDK.getInstance();
 
             expect(sdk).toBeInstanceOf(ConfigSDK);
+        });
+
+        it('should use empty config when none provided', async () => {
+            const sdk = await ConfigSDK.initialize({});
+
+            expect(sdk.getRaw()).toEqual({});
         });
     });
 
@@ -130,11 +103,7 @@ describe('ConfigSDK', () => {
 
     describe('Boundary Values', () => {
         it('should handle empty config', async () => {
-            AppYamlConfig.getInstance.mockReturnValue({
-                getAll: () => ({})
-            });
-
-            const sdk = await ConfigSDK.initialize({});
+            const sdk = await ConfigSDK.initialize({ config: {} });
 
             expect(sdk.getRaw()).toEqual({});
         });
@@ -149,11 +118,7 @@ describe('ConfigSDK', () => {
                     }
                 }
             };
-            AppYamlConfig.getInstance.mockReturnValue({
-                getAll: () => deepConfig
-            });
-
-            const sdk = await ConfigSDK.initialize({});
+            const sdk = await ConfigSDK.initialize({ config: deepConfig });
 
             expect(sdk.getRaw().level1.level2.level3.value).toBe('deep');
         });
@@ -163,11 +128,7 @@ describe('ConfigSDK', () => {
                 nullValue: null,
                 normalValue: 'test'
             };
-            AppYamlConfig.getInstance.mockReturnValue({
-                getAll: () => configWithNulls
-            });
-
-            const sdk = await ConfigSDK.initialize({});
+            const sdk = await ConfigSDK.initialize({ config: configWithNulls });
 
             expect(sdk.getRaw().nullValue).toBeNull();
             expect(sdk.getRaw().normalValue).toBe('test');
@@ -184,17 +145,16 @@ describe('ConfigSDK', () => {
             const sdk = new ConfigSDK({});
             // sdk.initialized is false by default
 
-            await expect(sdk.getResolved('STARTUP')).rejects.toThrow('not initialized');
+            await expect(sdk.getResolved(ComputeScope.STARTUP)).rejects.toThrow('not initialized');
         });
 
         it('should handle context extenders', async () => {
             const mockConfig = { app: { name: 'Test' } };
-            AppYamlConfig.getInstance.mockReturnValue({
-                getAll: () => mockConfig
-            });
-
             const extender = async (ctx, req) => ({ custom: 'extended' });
-            const sdk = await ConfigSDK.initialize({ contextExtenders: [extender] });
+            const sdk = await ConfigSDK.initialize({
+                config: mockConfig,
+                contextExtenders: [extender]
+            });
 
             expect(sdk).toBeInstanceOf(ConfigSDK);
         });
@@ -207,11 +167,7 @@ describe('ConfigSDK', () => {
     describe('Log Verification', () => {
         it('should log during bootstrap', async () => {
             const mockConfig = { key: 'value' };
-            AppYamlConfig.getInstance.mockReturnValue({
-                getAll: () => mockConfig
-            });
-
-            await ConfigSDK.initialize({});
+            await ConfigSDK.initialize({ config: mockConfig });
 
             // Logger outputs to console.log
             expect(console.log).toHaveBeenCalled();
@@ -230,11 +186,7 @@ describe('ConfigSDK', () => {
                     test: { baseUrl: 'https://test.com' }
                 }
             };
-            AppYamlConfig.getInstance.mockReturnValue({
-                getAll: () => fullConfig
-            });
-
-            const sdk = await ConfigSDK.initialize({});
+            const sdk = await ConfigSDK.initialize({ config: fullConfig });
 
             expect(sdk.getRaw().app.name).toBe('IntegrationTest');
             expect(sdk.getRaw().providers.test.baseUrl).toBe('https://test.com');
@@ -242,15 +194,26 @@ describe('ConfigSDK', () => {
 
         it('should work with realistic provider config', async () => {
             const providerConfig = createSampleConfig();
-            AppYamlConfig.getInstance.mockReturnValue({
-                getAll: () => providerConfig
-            });
-
-            const sdk = await ConfigSDK.initialize({});
+            const sdk = await ConfigSDK.initialize({ config: providerConfig });
             const raw = sdk.getRaw();
 
             expect(raw.app.name).toBe('Test App');
             expect(raw.providers.test_provider.base_url).toBe('https://api.test.com');
+        });
+
+        it('should apply overwrites in getResolved()', async () => {
+            const config = {
+                app: { name: 'Test' },
+                database: { host: 'localhost', password: null },
+                overwrite_from_context: {
+                    database: { password: 'secret123' }
+                }
+            };
+            const sdk = await ConfigSDK.initialize({ config });
+            const resolved = await sdk.getResolved(ComputeScope.STARTUP);
+
+            expect(resolved.database.password).toBe('secret123');
+            expect(resolved.database.host).toBe('localhost');
         });
     });
 });
