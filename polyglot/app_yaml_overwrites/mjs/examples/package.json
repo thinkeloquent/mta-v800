@@ -1,0 +1,18 @@
+{
+    "name": "app-yaml-overwrites-examples",
+    "version": "1.0.0",
+    "description": "Examples for app_yaml_overwrites package",
+    "type": "module",
+    "scripts": {
+        "start": "tsx basic-usage.ts",
+        "dev": "tsx watch fastify-app/server.ts",
+        "test": "echo 'Start server first with: npm run dev'"
+    },
+    "dependencies": {
+        "fastify": "^5.0.0"
+    },
+    "devDependencies": {
+        "tsx": "^4.0.0",
+        "@types/node": "^20.0.0"
+    }
+}
