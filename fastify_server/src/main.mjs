@@ -1,6 +1,7 @@
 import * as server from "@internal/polyglot-server";
 import path from "path";
 import { fileURLToPath } from "url";
+import { printRoutes } from "./print_routes.mjs";
 
 // Helper to get __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -31,6 +32,10 @@ try {
 
   // 2. Start (Bootstrap + Listen)
   await server.start(app, config);
+
+  // 3. Print routes after server is ready
+  await app.ready();
+  printRoutes(app);
 } catch (err) {
   console.error(err);
   process.exit(1);

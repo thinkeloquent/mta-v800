@@ -3,7 +3,6 @@ name = "runtime_template_resolver"
 version = "0.1.0"
 description = "Polyglot Runtime Template Resolver"
 authors = ["Your Name <your.email@example.com>"]
-readme = "README.md"
 packages = [{include = "runtime_template_resolver", from = "src"}]
 
 [tool.poetry.dependencies]

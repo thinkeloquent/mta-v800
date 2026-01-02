@@ -3,7 +3,6 @@ name = "vault-file"
 version = "1.0.0"
 description = "Polyglot Vault File and EnvStore for Python"
 authors = ["Deepmind Agent <agent@deepmind.com>"]
-readme = "README.md"
 packages = [{include = "vault_file", from = "src"}]
 
 [tool.poetry.dependencies]

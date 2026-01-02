@@ -37,6 +37,7 @@ elasticsearch = ">=8.0.0"
 # Local packages
 vault-file = {path = "polyglot/vault_file/py", develop = true}
 app-yaml-static-config = {path = "polyglot/app_yaml_static_config/py", develop = true}
+runtime-template-resolver = {path = "polyglot/overwrite_from_context/py", develop = true}
 polyglot-server = {path = "polyglot/server/py", develop = true}
 
 [tool.poetry.group.dev.dependencies]

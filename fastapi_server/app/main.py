@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 from polyglot_server.server import init, start
 from polyglot_server.autoload_routes import autoload_routes
+from .print_routes import print_routes
 
 # =============================================================================
 # Pre-flight: Log critical ENV variables before any initialization
@@ -119,6 +120,9 @@ app.state.config = config
 
 # Load routes at module level for uvicorn --reload compatibility
 autoload_routes(app, config.get("bootstrap", {}))
+
+# Print registered routes after server is loaded
+print_routes(app)
 
 print("[bootstrap] FastAPI Server initialization complete")
 print("=" * 60)

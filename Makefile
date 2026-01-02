@@ -122,6 +122,8 @@ dev-no-cache: clean clean-ports
 dev-fastify:
 	cd fastify_server && \
 		PORT=$(FASTIFY_PORT) \
+		LOG_LEVEL=debug \
+		VAULT_SECRET_FILE=$(MAKEFILE_DIR).env \
 		BUILD_ID=$(BUILD_ID) \
 		BUILD_VERSION=$(BUILD_VERSION) \
 		GIT_COMMIT=$(GIT_COMMIT) \
@@ -130,6 +132,8 @@ dev-fastify:
 # Run FastAPI backend (fastapi_server)
 dev-fastapi:
 	cd fastapi_server && \
+		LOG_LEVEL=debug \
+		VAULT_SECRET_FILE=$(MAKEFILE_DIR).env \
 		BUILD_ID=$(BUILD_ID) \
 		BUILD_VERSION=$(BUILD_VERSION) \
 		GIT_COMMIT=$(GIT_COMMIT) \

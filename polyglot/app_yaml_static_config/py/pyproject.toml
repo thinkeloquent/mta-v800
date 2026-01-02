@@ -3,7 +3,6 @@ name = "app_yaml_static_config"
 version = "0.1.0"
 description = "Polyglot YAML Configuration Loading, Storage, and Retrieval"
 authors = ["Your Name <your.email@example.com>"]
-readme = "README.md"
 packages = [{include = "app_yaml_static_config", from = "src"}]
 
 [tool.poetry.dependencies]

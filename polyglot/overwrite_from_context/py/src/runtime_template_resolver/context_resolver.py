@@ -140,14 +140,11 @@ class ContextResolver:
                 {"name": fn_name}
             )
 
-        # Check Scope
+        # Check Scope - skip REQUEST-scoped functions during STARTUP (leave for request-time resolution)
         fn_scope = self._registry.get_scope(fn_name)
         if fn_scope == ComputeScope.REQUEST and scope == ComputeScope.STARTUP:
-             raise ScopeViolationError(
-                 f"Cannot call REQUEST scope function '{fn_name}' from STARTUP scope",
-                 ErrorCode.SCOPE_VIOLATION,
-                 {"name": fn_name, "scope": "STARTUP", "fn_scope": "REQUEST"}
-             )
+            self._logger.debug(f"Skipping REQUEST scope function '{fn_name}' during STARTUP (will resolve at request time)")
+            return match.group(0)  # Return original template string
 
         try:
             return await self._registry.resolve(fn_name, context)

@@ -132,13 +132,11 @@ export class ContextResolver {
             );
         }
 
+        // Skip REQUEST-scoped functions during STARTUP (leave for request-time resolution)
         const fnScope = this.registry.getScope(fnName);
         if (fnScope === ComputeScope.REQUEST && scope === ComputeScope.STARTUP) {
-            throw new ScopeViolationError(
-                `Cannot call REQUEST scope function '${fnName}' from STARTUP scope`,
-                ErrorCode.SCOPE_VIOLATION,
-                { name: fnName, scope: 'STARTUP', fnScope: 'REQUEST' }
-            );
+            this.logger.debug(`Skipping REQUEST scope function '${fnName}' during STARTUP (will resolve at request time)`);
+            return match[0];  // Return original template string
         }
 
         try {

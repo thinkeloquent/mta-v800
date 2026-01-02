@@ -222,6 +222,23 @@ typing_extensions = {version = ">=4.5", markers = "python_version < \"3.13\""}
 trio = ["trio (>=0.31.0) ; python_version < \"3.10\"", "trio (>=0.32.0) ; python_version >= \"3.10\""]
 
 [[package]]
+name = "app-yaml-static-config"
+version = "0.1.0"
+description = "Polyglot YAML Configuration Loading, Storage, and Retrieval"
+optional = false
+python-versions = "^3.11"
+groups = ["main"]
+files = []
+develop = true
+
+[package.dependencies]
+PyYAML = "^6.0"
+
+[package.source]
+type = "directory"
+url = "polyglot/app_yaml_static_config/py"
+
+[[package]]
 name = "async-timeout"
 version = "5.0.1"
 description = "Timeout context manager for asyncio programs"
@@ -1083,6 +1100,24 @@ dev = ["pre-commit", "tox"]
 testing = ["coverage", "pytest", "pytest-benchmark"]
 
 [[package]]
+name = "polyglot-server"
+version = "0.1.0"
+description = "Polyglot Server Scaffolding (Python)"
+optional = false
+python-versions = "^3.11"
+groups = ["main"]
+files = []
+develop = true
+
+[package.dependencies]
+fastapi = "^0.115.0"
+uvicorn = {version = "^0.32.0", extras = ["standard"]}
+
+[package.source]
+type = "directory"
+url = "polyglot/server/py"
+
+[[package]]
 name = "propcache"
 version = "0.4.1"
 description = "Accelerated property cache"
@@ -1698,6 +1733,23 @@ files = [
 httpx = ">=0.25.0"
 
 [[package]]
+name = "runtime-template-resolver"
+version = "0.1.0"
+description = "Polyglot Runtime Template Resolver"
+optional = false
+python-versions = "^3.11"
+groups = ["main"]
+files = []
+develop = true
+
+[package.dependencies]
+PyYAML = "^6.0"
+
+[package.source]
+type = "directory"
+url = "polyglot/overwrite_from_context/py"
+
+[[package]]
 name = "six"
 version = "1.17.0"
 description = "Python 2 and 3 compatibility utilities"
@@ -1961,6 +2013,25 @@ files = [
 dev = ["Cython (>=3.0,<4.0)", "setuptools (>=60)"]
 docs = ["Sphinx (>=4.1.2,<4.2.0)", "sphinx_rtd_theme (>=0.5.2,<0.6.0)", "sphinxcontrib-asyncio (>=0.3.0,<0.4.0)"]
 test = ["aiohttp (>=3.10.5)", "flake8 (>=6.1,<7.0)", "mypy (>=0.800)", "psutil", "pyOpenSSL (>=25.3.0,<25.4.0)", "pycodestyle (>=2.11.0,<2.12.0)"]
+
+[[package]]
+name = "vault-file"
+version = "1.0.0"
+description = "Polyglot Vault File and EnvStore for Python"
+optional = false
+python-versions = "^3.11"
+groups = ["main"]
+files = []
+develop = true
+
+[package.dependencies]
+pydantic = "^2.0.0"
+python-dotenv = "^1.0.0"
+pyyaml = "^6.0.0"
+
+[package.source]
+type = "directory"
+url = "polyglot/vault_file/py"
 
 [[package]]
 name = "watchfiles"
@@ -2311,4 +2382,4 @@ propcache = ">=0.2.1"
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.11"
-content-hash = "bd9ae089b44c90d346209b7bf1678cb83f3f77ab03a947fa71a48bd136589159"
+content-hash = "f5455af8de0e3d4c57f923b1e76cd30e96ffdbcf8159596c28837ba0d2a19233"

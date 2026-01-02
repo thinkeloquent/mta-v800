@@ -4,7 +4,7 @@ import os
 # EnvStore logic to load from VAULT_SECRET_FILE if present
 def load_env_vars():
     # This logic runs when the module is imported by the server bootstrap
-    print(f"Loading Vault File integration... {os.environ.get("VAULT_SECRET_FILE", ".env")}")
+    print(f"Loading Vault File integration... {os.environ.get('VAULT_SECRET_FILE', '.env')}")
     # The integration docs say:
     # server: config.bootstrap.load_env = "{serverPath}/config/env" => load files in order
     
