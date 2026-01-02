@@ -1,0 +1,65 @@
+{
+    "vectors": [
+        {
+            "name": "Literal String",
+            "matches_compute": false,
+            "expression": "Hello World",
+            "context": {},
+            "expected_resolve": "Hello World"
+        },
+        {
+            "name": "Template Resolution",
+            "matches_compute": false,
+            "expression": "{{env.HOST}}",
+            "context": {
+                "env": {
+                    "HOST": "localhost"
+                }
+            },
+            "expected_resolve": "localhost"
+        },
+        {
+            "name": "Template Default",
+            "matches_compute": false,
+            "expression": "{{env.MISSING | 'fallback'}}",
+            "context": {
+                "env": {}
+            },
+            "expected_resolve": "fallback"
+        },
+        {
+            "name": "Compute Function",
+            "matches_compute": true,
+            "expression": "{{fn:echo}}",
+            "context": {},
+            "setup": {
+                "fn": "echo",
+                "returns": "echo_val"
+            },
+            "expected_resolve": "echo_val"
+        },
+        {
+            "name": "Compute Default",
+            "matches_compute": true,
+            "expression": "{{fn:missing | 'default_val'}}",
+            "context": {},
+            "setup": null,
+            "expected_resolve": "default_val"
+        },
+        {
+            "name": "Security Path Block",
+            "matches_compute": false,
+            "expression": "{{_private.key}}",
+            "context": {},
+            "expected_error": "ERR_SECURITY_PATH"
+        },
+        {
+            "name": "Recursion Limit",
+            "matches_compute": false,
+            "expression": "toodeep",
+            "context": {},
+            "depth": 11,
+            "expected_error": "ERR_RECURSION_LIMIT"
+        }
+    ]
+}

@@ -1,0 +1,28 @@
+[tool.poetry]
+name = "runtime_template_resolver"
+version = "0.1.0"
+description = "Polyglot Runtime Template Resolver"
+authors = ["Your Name <your.email@example.com>"]
+readme = "README.md"
+packages = [{include = "runtime_template_resolver", from = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+PyYAML = "^6.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.0.0"
+pytest-asyncio = "^0.24.0"
+fastapi = "0.115.0"
+httpx = "^0.28.0"
+
+[tool.pytest.ini_options]
+testpaths = ["__tests__"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+asyncio_mode = "auto"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
