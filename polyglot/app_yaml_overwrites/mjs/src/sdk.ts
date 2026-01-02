@@ -110,8 +110,8 @@ export class ConfigSDK {
         }, this.contextExtenders);
 
         // Apply overwrites from context
-        // Note: Full template resolution would require runtime-template-resolver
-        // This standalone version only handles overwrite merging
+        // Note: Full template resolution (e.g., {{ env.VAR }}) requires runtime_template_resolver
+        // This standalone version handles the overwrite_from_context merging pattern
         const overwriteSection = this.rawConfig.overwrite_from_context;
         if (overwriteSection) {
             return applyOverwrites(this.rawConfig, overwriteSection);

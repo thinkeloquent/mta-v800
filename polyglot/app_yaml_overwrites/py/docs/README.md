@@ -2,6 +2,16 @@
 
 Unified Configuration SDK for Python applications. Provides standardized logging, context building, and configuration merging for FastAPI and other Python frameworks.
 
+## Package Ecosystem
+
+| Package | Purpose |
+|---------|---------|
+| `app_yaml_static_config` | Static YAML configuration loading |
+| `runtime_template_resolver` | Template resolution (`{{ env.VAR }}`) |
+| `app_yaml_overwrites` | Context building and overwrite merging |
+
+**Note**: The `overwrite_from_context` is a YAML configuration key pattern. This package implements the logic to process `overwrite_from_context` sections.
+
 ## Installation
 
 ```bash

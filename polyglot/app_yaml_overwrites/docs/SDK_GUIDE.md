@@ -1,6 +1,16 @@
 # app_yaml_overwrites SDK Guide
 
-The `app_yaml_overwrites` SDK provides a high-level API for CLI tools, LLM Agents, and Developer Tools to interact with the unified configuration system. It combines static YAML configuration loading with runtime template resolution and context-aware overwrites.
+The `app_yaml_overwrites` SDK provides a high-level API for CLI tools, LLM Agents, and Developer Tools to interact with the unified configuration system. It handles context-aware configuration merging using the `overwrite_from_context` pattern.
+
+## Package Ecosystem
+
+| Package | Purpose |
+|---------|---------|
+| `app_yaml_static_config` | Static YAML configuration loading |
+| `runtime_template_resolver` | Template resolution (`{{ env.VAR }}`) |
+| `app_yaml_overwrites` | Context building and overwrite merging |
+
+This package (`app_yaml_overwrites`) can work standalone or integrate with `runtime_template_resolver` for full template resolution.
 
 ## Overview
 

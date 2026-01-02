@@ -2,6 +2,16 @@
 
 This document provides the complete API reference for the `app_yaml_overwrites` package, showing type signatures and interfaces for both TypeScript and Python implementations.
 
+## Package Ecosystem
+
+| Package | Purpose |
+|---------|---------|
+| `app_yaml_static_config` | Static YAML configuration loading |
+| `runtime_template_resolver` | Template resolution (`{{ env.VAR }}`) |
+| `app_yaml_overwrites` | Context building and overwrite merging |
+
+**Note**: The `overwrite_from_context` is a YAML configuration key pattern, not a package name. This package (`app_yaml_overwrites`) implements the logic to process `overwrite_from_context` sections.
+
 ## Core Components
 
 ### Logger
