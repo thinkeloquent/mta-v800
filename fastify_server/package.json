@@ -15,7 +15,7 @@
         "@internal/polyglot-server": "file:../polyglot/server/mjs",
         "vault-file": "file:../polyglot/vault_file/mjs",
         "app-yaml-static-config": "file:../polyglot/app_yaml_static_config/mjs",
-        "runtime-template-resolver": "file:../polyglot/overwrite_from_context/mjs"
+        "runtime-template-resolver": "workspace:*"
     },
     "devDependencies": {
         "@jest/globals": "^29.7.0",
