@@ -37,9 +37,15 @@ const contextResolverPluginCallback: FastifyPluginAsync<ContextResolverPluginOpt
     // STARTUP Resolution
     logger.debug('Resolving configuration (STARTUP scope)...');
 
+    // Get app config from server.config (AppYamlConfig instance decorated by 01-app-yaml)
+    const serverConfig = (fastify as any).config;
+    const appConfig = serverConfig?.getAll?.() || serverConfig?.toObject?.() || rawConfig || {};
+
+    // Expose app at top level for {{app.name}} etc.
     const startupContext = {
         env: process.env,
-        config: rawConfig
+        config: rawConfig,
+        app: appConfig?.app || {}
     };
 
     const resolvedStartupConfig = await resolver.resolveObject(
@@ -70,9 +76,16 @@ const contextResolverPluginCallback: FastifyPluginAsync<ContextResolverPluginOpt
 
     // REQUEST Resolution Hook
     fastify.addHook('onRequest', async (request: FastifyRequest) => {
+        // Get app config from server.config (AppYamlConfig instance)
+        const srvConfig = (fastify as any).config;
+        const appCfg = srvConfig?.getAll?.() || srvConfig?.toObject?.() || rawConfig || {};
+
+        // Expose app at top level for {{app.name}} etc., and state for request.state
         const reqContext = {
             env: process.env,
             config: rawConfig,
+            app: appCfg?.app || {},
+            state: (request as any).state || {},
             request: request
         };
 
@@ -95,9 +108,16 @@ const contextResolverPluginCallback: FastifyPluginAsync<ContextResolverPluginOpt
     // Decorate request helper only if needed?
     // Plan: "Decorate request.resolveContext() helper"
     fastify.decorateRequest('resolveContext', async function (this: FastifyRequest, expr: any) {
+        // Get app config from server.config (AppYamlConfig instance)
+        const srvCfg = (fastify as any).config;
+        const appCfg2 = srvCfg?.getAll?.() || srvCfg?.toObject?.() || rawConfig || {};
+
+        // Expose app at top level for {{app.name}} etc., and state for request.state
         const reqContext = {
             env: process.env,
             config: rawConfig,
+            app: appCfg2?.app || {},
+            state: (this as any).state || {},
             request: this
         };
         return resolver.resolve(expr, reqContext, ComputeScope.REQUEST);

@@ -37,8 +37,13 @@ export async function onStartup(server, config) {
     server.log.info({ providers: sdk.listProviders() }, 'Configuration loaded');
 
     // Decorate Fastify instance for global access
+    // Note: server.config may already be decorated with bootstrap config by server.mjs
+    // We overwrite it with AppYamlConfig instance which has getAll()/toObject() methods
     if (!server.hasDecorator('config')) {
         server.decorate('config', appConfig);
+    } else {
+        // Overwrite existing bootstrap config with AppYamlConfig
+        server.config = appConfig;
     }
     if (!server.hasDecorator('sdk')) {
         server.decorate('sdk', sdk);

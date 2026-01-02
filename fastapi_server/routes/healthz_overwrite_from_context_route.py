@@ -84,3 +84,64 @@ def mount(app: FastAPI):
                 "initialized": False,
                 "error": str(e),
             }
+
+    @app.get("/healthz/admin/overwrite-from-context/overwrite")
+    async def overwrite_from_context_overwrite(request: Request):
+        """Return the config with REQUEST-scoped functions resolved using current request context."""
+        try:
+            registry = getattr(request.app.state, "_context_registry", None)
+            resolver = getattr(request.app.state, "_context_resolver", None)
+            raw_config = getattr(request.app.state, "_context_raw_config", None)
+
+            if registry is None or resolver is None:
+                return {
+                    "initialized": False,
+                    "error": "Context resolver not configured",
+                }
+
+            # Import ComputeScope for REQUEST resolution
+            try:
+                from runtime_template_resolver import ComputeScope
+            except ImportError:
+                return {
+                    "initialized": False,
+                    "error": "runtime_template_resolver not installed",
+                }
+
+            import os
+
+            # Get app config from app.state.config (AppYamlConfig instance)
+            server_cfg = getattr(request.app.state, "config", None)
+            app_cfg_dict = {}
+            if server_cfg:
+                if hasattr(server_cfg, "get_all"):
+                    app_cfg_dict = server_cfg.get_all()
+                elif hasattr(server_cfg, "to_dict"):
+                    app_cfg_dict = server_cfg.to_dict()
+            app_cfg_dict = app_cfg_dict or raw_config or {}
+
+            # Build REQUEST context - expose app at top level for {{app.name}} etc., and state for request.state
+            request_context = {
+                "env": dict(os.environ),
+                "config": raw_config,
+                "app": app_cfg_dict.get("app", {}) if app_cfg_dict else {},
+                "state": getattr(request.state, "__dict__", {}) if hasattr(request, "state") else {},
+                "request": request,
+            }
+
+            # Resolve with REQUEST scope to get fully resolved config
+            resolved_with_request = await resolver.resolve_object(
+                raw_config,
+                context=request_context,
+                scope=ComputeScope.REQUEST
+            )
+
+            return {
+                "initialized": True,
+                "overwrite_resolved": resolved_with_request,
+            }
+        except Exception as e:
+            return {
+                "initialized": False,
+                "error": str(e),
+            }

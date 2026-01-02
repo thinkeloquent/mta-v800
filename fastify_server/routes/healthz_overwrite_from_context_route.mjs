@@ -82,4 +82,62 @@ export async function mount(server) {
       };
     }
   });
+
+  server.get("/healthz/admin/overwrite-from-context/overwrite", async (request, reply) => {
+    try {
+      const registry = server.contextRegistry;
+      const rawConfig = server.contextRawConfig;
+
+      if (!registry) {
+        return {
+          initialized: false,
+          error: "Context resolver not configured",
+        };
+      }
+
+      // Import resolver and scope
+      let createResolver, ComputeScope;
+      try {
+        const mod = await import("runtime-template-resolver");
+        createResolver = mod.createResolver;
+        ComputeScope = mod.ComputeScope;
+      } catch (e) {
+        return {
+          initialized: false,
+          error: "runtime-template-resolver not installed",
+        };
+      }
+
+      // Get app config from server.config (AppYamlConfig instance)
+      const serverConfig = server.config;
+      const appConfigDict = serverConfig?.getAll?.() || serverConfig?.toObject?.() || rawConfig || {};
+
+      // Build REQUEST context
+      const requestContext = {
+        env: process.env,
+        config: rawConfig,
+        app: appConfigDict?.app || {},
+        state: request.state || {},
+        request: request,
+      };
+
+      // Resolve with REQUEST scope
+      const resolver = createResolver(registry);
+      const resolvedWithRequest = await resolver.resolveObject(
+        rawConfig,
+        requestContext,
+        ComputeScope.REQUEST
+      );
+
+      return {
+        initialized: true,
+        overwriteResolved: resolvedWithRequest,
+      };
+    } catch (e) {
+      return {
+        initialized: false,
+        error: e.message,
+      };
+    }
+  });
 }

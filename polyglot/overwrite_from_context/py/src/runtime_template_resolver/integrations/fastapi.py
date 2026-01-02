@@ -73,10 +73,21 @@ async def resolve_startup(
     
     resolver = create_resolver(registry=registry, logger=_logger)
     
-    # Build STARTUP context
+    # Get app config from app.state.config (AppYamlConfig instance decorated by 01_app_yaml)
+    server_config = getattr(app.state, "config", None)
+    app_config_dict = {}
+    if server_config:
+        if hasattr(server_config, "get_all"):
+            app_config_dict = server_config.get_all()
+        elif hasattr(server_config, "to_dict"):
+            app_config_dict = server_config.to_dict()
+    app_config_dict = app_config_dict or config or {}
+
+    # Build STARTUP context - expose app at top level for {{app.name}} etc.
     startup_context = {
         "env": dict(os.environ),
-        "config": config, 
+        "config": config,
+        "app": app_config_dict.get("app", {}),
     }
     
     _logger.debug("Resolving configuration (STARTUP scope)...")
@@ -128,14 +139,23 @@ async def get_request_config(request: Request) -> Any:
         # If STARTUP resolution didn't run, we can't do much.
         raise RuntimeError("Runtime Template Resolver not configured")
 
-    # Build REQUEST context
+    # Get app config from app.state.config (AppYamlConfig instance)
+    server_cfg = getattr(request.app.state, "config", None)
+    app_cfg_dict = {}
+    if server_cfg:
+        if hasattr(server_cfg, "get_all"):
+            app_cfg_dict = server_cfg.get_all()
+        elif hasattr(server_cfg, "to_dict"):
+            app_cfg_dict = server_cfg.to_dict()
+    app_cfg_dict = app_cfg_dict or raw_config or {}
+
+    # Build REQUEST context - expose app at top level for {{app.name}} etc., and state for request.state
     req_context = {
         "env": dict(os.environ),
-        "config": raw_config, # Start with raw config
-        "request": request, # Pass request object for headers etc (User function needs to handle it)
-        # Or maybe extract headers/query/path params?
-        # Plan 3.3 Usage in routes: "registry.register("get_request_id", lambda ctx: ctx.get("request")...)"
-        # So we pass request object.
+        "config": raw_config,
+        "app": app_cfg_dict.get("app", {}),
+        "state": getattr(request.state, "__dict__", {}) if hasattr(request, "state") else {},
+        "request": request,
     }
     
     # Resolve again with REQUEST scope?
